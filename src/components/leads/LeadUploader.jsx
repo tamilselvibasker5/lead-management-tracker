@@ -4,6 +4,7 @@ import Button from '../common/Button';
 import Modal from '../common/Modal';
 import Spinner from '../common/Spinner';
 import * as api from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import './LeadUploader.css';
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -12,76 +13,66 @@ import './LeadUploader.css';
    Maps common Excel column headers to the database field names.
    Add more entries here as needed for your use case.
    ═══════════════════════════════════════════════════════════════════ */
-const DEFAULT_COLUMNS = ['source', 'name', 'email', 'phone', 'location', 'assignedTo', 'notes'];
-
-const COLUMN_DISPLAY_NAMES = {
-  source: 'Source',
-  name: 'Name',
-  email: 'Email',
-  phone: 'Phone',
-  location: 'Location',
-  assignedTo: 'Assigned to',
-  notes: 'Notes',
-};
+const DEFAULT_COLUMNS = ['Source', 'Name', 'Email', 'Phone', 'Location', 'Assigned to', 'Notes'];
 
 const HEADER_MAP = {
   // Excel header (lowercased & trimmed) → Default column name
-  'source': 'source',
-  'lead source': 'source',
-  'campaign': 'source',
-  'campaign_name': 'source',
-  'campaign name': 'source',
-  'ad name': 'source',
-  'platform': 'source',
-  'medium': 'source',
-  'source/medium': 'source',
+  'source': 'Source',
+  'lead source': 'Source',
+  'campaign': 'Source',
+  'campaign_name': 'Source',
+  'campaign name': 'Source',
+  'ad name': 'Source',
+  'platform': 'Source',
+  'medium': 'Source',
+  'source/medium': 'Source',
 
-  'name': 'name',
-  'lead name': 'name',
-  'full name': 'name',
-  'contact name': 'name',
-  'customer name': 'name',
-  'client name': 'name',
-  'first name': 'name',
-  'first_name': 'name',
-  'student name': 'name',
+  'name': 'Name',
+  'lead name': 'Name',
+  'full name': 'Name',
+  'contact name': 'Name',
+  'customer name': 'Name',
+  'client name': 'Name',
+  'first name': 'Name',
+  'first_name': 'Name',
+  'student name': 'Name',
 
-  'email': 'email',
-  'email address': 'email',
-  'e-mail': 'email',
-  'mail': 'email',
-  'email id': 'email',
-  'mail id': 'email',
+  'email': 'Email',
+  'email address': 'Email',
+  'e-mail': 'Email',
+  'mail': 'Email',
+  'email id': 'Email',
+  'mail id': 'Email',
 
-  'phone': 'phone',
-  'phone number': 'phone',
-  'mobile': 'phone',
-  'mobile number': 'phone',
-  'contact': 'phone',
-  'contact number': 'phone',
-  'contact no': 'phone',
-  'ph': 'phone',
-  'ph number': 'phone',
-  'ph no': 'phone',
-  'whatsapp': 'phone',
-  'whatsapp number': 'phone',
+  'phone': 'Phone',
+  'phone number': 'Phone',
+  'mobile': 'Phone',
+  'mobile number': 'Phone',
+  'contact': 'Phone',
+  'contact number': 'Phone',
+  'contact no': 'Phone',
+  'ph': 'Phone',
+  'ph number': 'Phone',
+  'ph no': 'Phone',
+  'whatsapp': 'Phone',
+  'whatsapp number': 'Phone',
 
-  'location': 'location',
-  'city': 'location',
-  'state': 'location',
-  'country': 'location',
-  'address': 'location',
-  'region': 'location',
+  'location': 'Location',
+  'city': 'Location',
+  'state': 'Location',
+  'country': 'Location',
+  'address': 'Location',
+  'region': 'Location',
 
-  'assigned to': 'assignedTo',
-  'assignee': 'assignedTo',
-  'owner': 'assignedTo',
-  'agent': 'assignedTo',
+  'assigned to': 'Assigned to',
+  'assignee': 'Assigned to',
+  'owner': 'Assigned to',
+  'agent': 'Assigned to',
 
-  'notes': 'notes',
-  'remark': 'notes',
-  'remarks': 'notes',
-  'comments': 'notes',
+  'notes': 'Notes',
+  'remark': 'Notes',
+  'remarks': 'Notes',
+  'comments': 'Notes',
 };
 
 /** Accepted file extensions. */
@@ -99,13 +90,13 @@ function mapHeader(raw) {
   if (HEADER_MAP[key]) return HEADER_MAP[key];
 
   // 2. Smart substring fallback
-  if (key.includes('email') || key.includes('mail')) return 'email';
-  if (key.includes('phone') || key.includes('ph') || key.includes('mobile') || key.includes('contact') || key.includes('whatsapp') || key.includes('number') || key.includes('cell')) return 'phone';
-  if (key.includes('city') || key.includes('location') || key.includes('region') || key.includes('address') || key.includes('state')) return 'location';
-  if (key.includes('source') || key.includes('campaign') || key.includes('platform') || key.includes('medium') || key.includes('ad') || key.includes('channel')) return 'source';
-  if (key.includes('name') || key.includes('candidate') || key.includes('student') || key.includes('client') || key.includes('customer') || key.includes('person')) return 'name';
-  if (key.includes('note') || key.includes('remark') || key.includes('comment') || key.includes('desc') || key.includes('detail') || key.includes('feedback')) return 'notes';
-  if (key.includes('assign') || key.includes('owner') || key.includes('agent') || key.includes('rep') || key.includes('caller') || key.includes('executive') || key.includes('employee') || key.includes('staff') || key.includes('counselor') || key.includes('user') || key.includes('handled')) return 'assignedTo';
+  if (key.includes('email') || key.includes('mail')) return 'Email';
+  if (key.includes('phone') || key.includes('ph') || key.includes('mobile') || key.includes('contact') || key.includes('whatsapp') || key.includes('number') || key.includes('cell')) return 'Phone';
+  if (key.includes('city') || key.includes('location') || key.includes('region') || key.includes('address') || key.includes('state')) return 'Location';
+  if (key.includes('source') || key.includes('campaign') || key.includes('platform') || key.includes('medium') || key.includes('ad') || key.includes('channel')) return 'Source';
+  if (key.includes('name') || key.includes('candidate') || key.includes('student') || key.includes('client') || key.includes('customer') || key.includes('person')) return 'Name';
+  if (key.includes('note') || key.includes('remark') || key.includes('comment') || key.includes('desc') || key.includes('detail') || key.includes('feedback')) return 'Notes';
+  if (key.includes('assign') || key.includes('owner') || key.includes('agent') || key.includes('rep') || key.includes('caller') || key.includes('executive') || key.includes('employee') || key.includes('staff') || key.includes('counselor') || key.includes('user') || key.includes('handled')) return 'Assigned to';
 
   return key;
 }
@@ -131,35 +122,25 @@ function parseWorkbook(workbook) {
   const mappedHeaders = rawHeaders.map(mapHeader);
 
   // Convert to array-of-objects using the mapped headers
-  const rawData = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
-  if (rawData.length > 0) {
-    console.log(Object.keys(rawData[0]));
-  }
+  const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
 
-  const rows = rawData.map((row) => {
-    const getVal = (possibleKeys) => {
-      const cleanPossible = possibleKeys.map((k) => k.toLowerCase().trim());
-      for (const [key, value] of Object.entries(row)) {
-        const cleanKey = String(key).toLowerCase().trim();
-        if (cleanPossible.includes(cleanKey)) {
-          if (value !== undefined && value !== null) {
-            const strVal = String(value).trim();
-            return strVal !== '' ? strVal : undefined;
-          }
-        }
+  const rows = jsonData.map((row) => {
+    const cleaned = {};
+
+    // 1. Initialize all default columns to empty string so they always exist
+    DEFAULT_COLUMNS.forEach((col) => {
+      cleaned[col] = '';
+    });
+
+    // 2. Map only the allowed columns from Excel
+    for (const [key, value] of Object.entries(row)) {
+      const mappedKey = mapHeader(key);
+      if (DEFAULT_COLUMNS.includes(mappedKey)) {
+        cleaned[mappedKey] = typeof value === 'string' ? value.trim() : value;
       }
-      return undefined;
-    };
+    }
 
-    return {
-      source: getVal(['source', 'lead source', 'lead_source', 'campaign', 'campaign_name', 'campaign name', 'ad name', 'platform', 'medium', 'source/medium']) || '—',
-      name: getVal(['name', 'lead name', 'lead_name', 'full name', 'full_name', 'contact name', 'contact_name', 'customer name', 'customer_name', 'client name', 'client_name', 'first name', 'first_name', 'student name', 'student_name']) || '—',
-      email: getVal(['email', 'email address', 'email_address', 'e-mail', 'mail', 'email id', 'email_id', 'mail id', 'mail_id']) || '—',
-      phone: getVal(['phone', 'phone number', 'phone_number', 'mobile', 'mobile number', 'mobile_number', 'contact', 'contact number', 'contact_number', 'contact no', 'contact_no', 'ph', 'ph number', 'ph_number', 'ph no', 'ph_no', 'whatsapp', 'whatsapp number', 'whatsapp_number']) || '—',
-      location: getVal(['location', 'city', 'state', 'country', 'address', 'region']) || '—',
-      assignedTo: getVal(['assigned to', 'assigned_to', 'assignedTo', 'assignee', 'owner', 'agent']) || '—',
-      notes: getVal(['notes', 'remark', 'remarks', 'comments']) || '—'
-    };
+    return cleaned;
   });
 
   return { headers: rawHeaders, mappedHeaders, rows };
@@ -189,6 +170,7 @@ function formatFileSize(bytes) {
  * @param {{ onImportComplete?: () => void }} props
  */
 export default function LeadUploader({ onImportComplete }) {
+  const { user, role } = useAuth();
   /* ── State ── */
   const [file, setFile] = useState(null);
   const [parsedData, setParsedData] = useState(null); // { headers, mappedHeaders, rows }
@@ -347,7 +329,13 @@ export default function LeadUploader({ onImportComplete }) {
        *   ]
        * }
        */
-      const payload = { leads: parsedData.rows };
+      const payload = {
+        leads: parsedData.rows.map((row) => ({
+          ...row,
+          createdBy: user?.id || null,
+          createdByRole: role || null,
+        })),
+      };
 
       await api.bulkImportLeads(payload);
 
@@ -461,9 +449,7 @@ export default function LeadUploader({ onImportComplete }) {
                   {pair.from}
                 </span>
                 <span className="lead-uploader__mapping-arrow">→</span>
-                <span className="lead-uploader__mapping-to">
-                  {COLUMN_DISPLAY_NAMES[pair.to] || pair.to}
-                </span>
+                <span className="lead-uploader__mapping-to">{pair.to}</span>
               </div>
             ))}
           </div>
@@ -497,7 +483,7 @@ export default function LeadUploader({ onImportComplete }) {
                 <tr>
                   <th>#</th>
                   {activeColumns.map((field) => (
-                    <th key={field}>{COLUMN_DISPLAY_NAMES[field] || field}</th>
+                    <th key={field}>{field}</th>
                   ))}
                 </tr>
               </thead>
@@ -644,7 +630,7 @@ export default function LeadUploader({ onImportComplete }) {
               <option value="" disabled>Select a column...</option>
               {activeColumns.map((col) => (
                 <option key={col} value={col}>
-                  {COLUMN_DISPLAY_NAMES[col] || col}
+                  {col}
                 </option>
               ))}
             </select>

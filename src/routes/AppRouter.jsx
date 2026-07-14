@@ -29,6 +29,7 @@ export default function AppRouter() {
         <Route element={<DashboardLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/leads" element={<LeadsPage />} />
+          <Route path="/import" element={<ImportPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
           {/* ── Admin + Super Admin only ── */}
@@ -41,7 +42,6 @@ export default function AppRouter() {
           >
             <Route path="/assignment" element={<AssignmentPage />} />
             <Route path="/employees" element={<EmployeesPage />} />
-            <Route path="/import" element={<ImportPage />} />
           </Route>
 
           {/* ── Super Admin ONLY ── */}

@@ -82,7 +82,9 @@ export async function fetchLeads(filters = {}) {
 
   let result = [...leads];
   if (filters.assignedTo) {
-    result = result.filter((l) => l.assignedTo === filters.assignedTo);
+    result = result.filter(
+      (l) => l.assignedTo === filters.assignedTo || l.createdByRole === 'employee'
+    );
   }
   return result;
 
@@ -384,6 +386,8 @@ export async function bulkImportLeads(payload) {
     assignedTo: lead.assignedTo || lead['Assigned to'] || lead.AssignedTo || null,
     notes: lead.notes || lead.Notes || '',
     createdAt: lead.createdAt || lead.CreatedAt || new Date().toISOString(),
+    createdBy: lead.createdBy || null,
+    createdByRole: lead.createdByRole || null,
   }));
 
   leads.push(...imported);

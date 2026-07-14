@@ -39,6 +39,11 @@ export default function Sidebar({ isOpen, onClose }) {
             {role === ROLES.EMPLOYEE ? 'My Leads' : 'All Leads'}
           </NavLink>
 
+          <NavLink to="/import" className={linkClass} onClick={onClose}>
+            <span className="sidebar__link-icon">📥</span>
+            Import Leads
+          </NavLink>
+
           {isAdminOrAbove && (
             <>
               <span className="sidebar__section-title">Management</span>
@@ -51,11 +56,6 @@ export default function Sidebar({ isOpen, onClose }) {
               <NavLink to="/employees" className={linkClass} onClick={onClose}>
                 <span className="sidebar__link-icon">🏢</span>
                 Employees
-              </NavLink>
-
-              <NavLink to="/import" className={linkClass} onClick={onClose}>
-                <span className="sidebar__link-icon">📥</span>
-                Import Leads
               </NavLink>
             </>
           )}

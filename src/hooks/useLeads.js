@@ -119,13 +119,18 @@ export function useLeads() {
   /* ── Add Lead ── */
   const addLead = useCallback(async (leadData) => {
     try {
-      const newLead = await api.addLead(leadData);
+      const dataWithCreator = {
+        ...leadData,
+        createdBy: user?.id || null,
+        createdByRole: role || null,
+      };
+      const newLead = await api.addLead(dataWithCreator);
       setLeads((prev) => [newLead, ...prev]);
     } catch (err) {
       setError(err.message || 'Failed to add lead');
       throw err;
     }
-  }, []);
+  }, [user?.id, role]);
 
   /* ── Add Lead Activity ── */
   const addLeadActivity = useCallback(async (leadId, activity) => {
