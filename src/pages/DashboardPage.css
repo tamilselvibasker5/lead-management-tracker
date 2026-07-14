@@ -1,0 +1,122 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ── Stats cards ── */
+.dashboard__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.stat-card:hover {
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 16px rgba(99, 102, 241, 0.1);
+}
+
+.stat-card__icon {
+  width: 46px;
+  height: 46px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.stat-card__icon--total {
+  background: rgba(99, 102, 241, 0.12);
+}
+
+.stat-card__icon--new {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.stat-card__icon--contacted {
+  background: rgba(251, 191, 36, 0.12);
+}
+
+.stat-card__icon--responded {
+  background: rgba(34, 197, 94, 0.12);
+}
+
+.stat-card__info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-card__value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-text);
+  line-height: 1.1;
+}
+
+.stat-card__label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-top: 0.15rem;
+}
+
+/* ── Tabs ── */
+.dashboard__tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0;
+}
+
+.dashboard__tab {
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: -1px;
+}
+
+.dashboard__tab:hover {
+  color: var(--color-text);
+}
+
+.dashboard__tab--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.dashboard__tab-content {
+  margin-top: 1rem;
+}
+
+/* ── Section header ── */
+.dashboard__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.dashboard__section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}

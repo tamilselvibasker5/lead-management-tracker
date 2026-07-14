@@ -1,0 +1,27 @@
+/* ═══════════════════════════════════════════════════════
+   Application-level styles
+   ═══════════════════════════════════════════════════════ */
+
+#root {
+  min-height: 100vh;
+}
+
+/* ── Form input shared base (used by modals, pages, etc.) ── */
+input,
+select,
+textarea {
+  font-family: var(--font-primary);
+}
+
+/* ── Utility: visually hidden ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

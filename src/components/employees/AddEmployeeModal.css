@@ -1,0 +1,48 @@
+.add-employee__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.add-employee__group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.add-employee__label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.add-employee__input,
+.add-employee__select {
+  padding: 0.625rem 1rem;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 0.875rem;
+  transition: border-color 0.2s;
+}
+
+.add-employee__input:focus,
+.add-employee__select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.add-employee__input::placeholder {
+  color: var(--color-text-dimmed);
+}
+
+.add-employee__error {
+  font-size: 0.75rem;
+  color: var(--color-danger);
+  margin-top: 0.2rem;
+}

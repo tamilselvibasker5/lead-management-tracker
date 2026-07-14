@@ -1,0 +1,44 @@
+.lead-status-dropdown .dropdown__select {
+  border: none;
+  padding: 0.3rem 1.8rem 0.3rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Status color coding */
+.lead-status-dropdown--New .dropdown__select {
+  background-color: rgba(59, 130, 246, 0.12);
+  color: #60a5fa;
+}
+
+.lead-status-dropdown--Contacted .dropdown__select {
+  background-color: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+.lead-status-dropdown--Responded .dropdown__select {
+  background-color: rgba(34, 197, 94, 0.12);
+  color: #4ade80;
+}
+
+.lead-status-dropdown--Qualified .dropdown__select {
+  background-color: rgba(139, 92, 246, 0.12);
+  color: #a78bfa;
+}
+
+.lead-status-dropdown--Proposal-Sent .dropdown__select {
+  background-color: rgba(249, 115, 22, 0.12);
+  color: #fb923c;
+}
+
+.lead-status-dropdown--Won .dropdown__select {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+.lead-status-dropdown--Lost .dropdown__select {
+  background-color: rgba(239, 68, 68, 0.12);
+  color: #f87171;
+}
