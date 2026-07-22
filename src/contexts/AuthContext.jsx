@@ -51,6 +51,15 @@ export function AuthProvider({ children }) {
     clearStoredAuth();
   }, []);
 
+  /* ── Update User Profile ── */
+  const updateUser = useCallback((updatedUserData) => {
+    setUser((prev) => {
+      const newUser = { ...prev, ...updatedUserData };
+      setStoredAuth({ user: newUser, token });
+      return newUser;
+    });
+  }, [token]);
+
   const value = {
     user,
     role: user?.role ?? null,
@@ -58,10 +67,12 @@ export function AuthProvider({ children }) {
     isAuthenticated: !!user,
     login,
     logout,
+    updateUser,
     loading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+
 }
 
 export default AuthContext;

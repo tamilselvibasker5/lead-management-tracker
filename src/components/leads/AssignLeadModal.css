@@ -4,17 +4,17 @@
 
 .assign-modal__label {
   display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   color: var(--color-text-muted);
   margin-bottom: 0.4rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 }
 
 .assign-modal__value {
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   color: var(--color-text);
 }
 
@@ -22,16 +22,16 @@
   width: 100%;
   padding: 0.625rem 1rem;
   border-radius: var(--radius-md);
-  border: 1.5px solid var(--color-border);
+  border: 1px solid var(--color-border);
   background: var(--color-surface-elevated);
   color: var(--color-text);
   font-family: var(--font-primary);
   font-size: 0.875rem;
-  transition: border-color 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .assign-modal__select:focus {
   outline: none;
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
 }

@@ -7,6 +7,7 @@ import AssignLeadModal from '../components/leads/AssignLeadModal';
 import LeadDetailsModal from '../components/leads/LeadDetailsModal';
 import Button from '../components/common/Button';
 import { autoAssignLead } from '../utils/assignmentRules';
+import { Zap } from 'lucide-react';
 
 /**
  * Admin-only page for assigning leads to employees.
@@ -40,13 +41,17 @@ export default function AssignmentPage() {
       for (const lead of leads) {
         const matchedEmpId = autoAssignLead(lead, '', employees);
 
-        if (matchedEmpId && matchedEmpId !== 'Unassigned' && matchedEmpId !== lead.assignedTo) {
+        if (matchedEmpId && matchedEmpId !== 'Unassigned' && matchedEmpId !== lead.assignedToRaw && matchedEmpId !== lead.assignedTo) {
           await assignLead(lead.id, matchedEmpId);
           assignedCount++;
         }
       }
 
-      alert(`⚡ Auto-assigned ${assignedCount} lead(s) based on location & language matching!`);
+      if (assignedCount > 0) {
+        alert(`Successfully Auto-Assigned ${assignedCount} lead(s) to employees matching Location & Language!`);
+      } else {
+        alert('All leads are already assigned or no new location/language matches were found.');
+      }
     } catch (err) {
       console.error('Auto assign error:', err);
       alert('An error occurred during auto-assignment.');
@@ -81,8 +86,9 @@ export default function AssignmentPage() {
             onClick={handleAutoAssignAll}
             loading={autoAssigning}
             title="Automatically assign leads to employees matching location & language"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            ⚡ Auto Assign
+            <Zap size={16} /> Auto Assign Leads
           </Button>
         )}
       </div>
@@ -95,9 +101,12 @@ export default function AssignmentPage() {
         onStatusChange={updateStatus}
         onEditClick={handleEditClick}
         onAssignLead={assignLead}
+        onUpdateLeadDetails={updateLeadDetails}
+        onAddActivity={addLeadActivity}
         onDeleteClick={deleteLead}
         onDeleteAllClick={deleteAllLeads}
         showAssignAction
+        hideImportExcel
       />
 
       <AssignLeadModal

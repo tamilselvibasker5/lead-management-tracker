@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
  * PrivateRoute — RBAC guard wrapper.
  *
  * Usage in your route config:
- *   <Route element={<PrivateRoute allowedRoles={[ROLES.ADMIN, ROLES.SUPER_ADMIN]} />}>
+ *   <Route element={<PrivateRoute allowedRoles={[ROLES.ADMIN]} />}>
  *     <Route path="/admin-page" element={<AdminPage />} />
  *   </Route>
  *

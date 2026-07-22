@@ -1,5 +1,5 @@
 import Dropdown from '../common/Dropdown';
-import { LEAD_STATUSES } from '../../mocks/leads';
+import { LEAD_STATUSES } from '../../utils/leadStatuses';
 import './LeadStatusDropdown.css';
 
 const STATUS_OPTIONS = Object.values(LEAD_STATUSES).map((s) => ({

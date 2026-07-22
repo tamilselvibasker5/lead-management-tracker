@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import Button from '../components/common/Button';
+import { ShieldAlert, ArrowLeft } from 'lucide-react';
 
 /**
  * 403 Unauthorized fallback page.
@@ -18,7 +19,9 @@ export default function UnauthorizedPage() {
         textAlign: 'center',
       }}
     >
-      <div style={{ fontSize: '4rem', marginBottom: '1rem' }}>🚫</div>
+      <div style={{ marginBottom: '1rem', color: 'var(--color-danger)' }}>
+        <ShieldAlert size={64} />
+      </div>
       <h2
         style={{
           fontSize: '1.75rem',
@@ -39,8 +42,8 @@ export default function UnauthorizedPage() {
         You don't have permission to access this page. If you believe this is an
         error, contact your administrator.
       </p>
-      <Button variant="secondary" onClick={() => navigate('/')}>
-        ← Back to Dashboard
+      <Button variant="secondary" onClick={() => navigate('/')} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+        <ArrowLeft size={16} /> Back to Dashboard
       </Button>
     </div>
   );

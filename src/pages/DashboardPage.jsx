@@ -4,6 +4,13 @@ import { useLeads } from '../hooks/useLeads';
 import { ROLES } from '../utils/roles';
 import Spinner from '../components/common/Spinner';
 import {
+  Users,
+  Sparkles,
+  CheckCircle2,
+  Trophy,
+  XCircle,
+} from 'lucide-react';
+import {
   BarChart,
   Bar,
   XAxis,
@@ -22,13 +29,13 @@ import './DashboardPage.css';
 
 /**
  * Main dashboard that renders the high-level progress stats.
- * Includes Analytics for Admin and Super Admin.
+ * Includes Analytics for Admin.
  */
 export default function DashboardPage() {
   const { role } = useAuth();
   const { leads, loading, error } = useLeads();
 
-  const isAdminOrAbove = role === ROLES.ADMIN || role === ROLES.SUPER_ADMIN;
+  const isAdmin = role === ROLES.ADMIN;
 
   /* ── Stats ── */
   const stats = useMemo(() => {
@@ -90,35 +97,45 @@ export default function DashboardPage() {
       {/* ── Stats ── */}
       <div className="dashboard__stats">
         <div className="stat-card">
-          <div className="stat-card__icon stat-card__icon--total">📊</div>
+          <div className="stat-card__icon stat-card__icon--total">
+            <Users size={22} />
+          </div>
           <div className="stat-card__info">
             <span className="stat-card__value">{stats.total}</span>
             <span className="stat-card__label">Total Leads</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__icon stat-card__icon--new">🆕</div>
+          <div className="stat-card__icon stat-card__icon--new">
+            <Sparkles size={22} />
+          </div>
           <div className="stat-card__info">
             <span className="stat-card__value">{stats.newCount}</span>
             <span className="stat-card__label">New</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__icon stat-card__icon--contacted" style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6' }}>⭐</div>
+          <div className="stat-card__icon stat-card__icon--contacted" style={{ background: 'rgba(139, 92, 246, 0.12)', color: '#8b5cf6' }}>
+            <CheckCircle2 size={22} />
+          </div>
           <div className="stat-card__info">
             <span className="stat-card__value">{stats.qualified}</span>
             <span className="stat-card__label">Qualified</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__icon stat-card__icon--responded" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>🏆</div>
+          <div className="stat-card__icon stat-card__icon--responded" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>
+            <Trophy size={22} />
+          </div>
           <div className="stat-card__info">
             <span className="stat-card__value">{stats.won}</span>
             <span className="stat-card__label">Won</span>
           </div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__icon stat-card__icon--responded" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>❌</div>
+          <div className="stat-card__icon stat-card__icon--responded" style={{ background: 'rgba(239, 68, 68, 0.12)', color: '#ef4444' }}>
+            <XCircle size={22} />
+          </div>
           <div className="stat-card__info">
             <span className="stat-card__value">{stats.lost}</span>
             <span className="stat-card__label">Lost</span>
@@ -165,8 +182,8 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* ── Analytics (Admin & Super Admin Only) ── */}
-      {isAdminOrAbove && (
+      {/* ── Analytics (Admin Only) ── */}
+      {isAdmin && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '1.5rem', marginTop: '1rem' }}>
           {/* Revenue Growth Bar Chart */}
           <div style={{ background: 'var(--color-surface-elevated)', padding: '1.5rem', borderRadius: 'var(--radius-lg)' }}>

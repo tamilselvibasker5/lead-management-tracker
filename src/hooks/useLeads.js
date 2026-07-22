@@ -7,18 +7,7 @@ import * as api from '../services/api';
  * Custom hook that fetches leads and provides mutation helpers.
  *
  * - For EMPLOYEE role: automatically filters to only their assigned leads.
- * - For ADMIN / SUPER_ADMIN: returns all leads.
- *
- * @returns {{
- *   leads: object[],
- *   loading: boolean,
- *   error: string|null,
- *   updateStatus: (leadId: string, newStatus: string) => Promise<void>,
- *   assignLead: (leadId: string, employeeId: string) => Promise<void>,
- *   addLead: (leadData: object) => Promise<void>,
- *   addLeadActivity: (leadId: string, activity: object) => Promise<void>,
- *   refreshLeads: () => Promise<void>,
- * }}
+ * - For ADMIN: returns all leads.
  */
 export function useLeads() {
   const { user, role } = useAuth();
@@ -52,14 +41,12 @@ export function useLeads() {
 
   /* ── Update Status (optimistic) ── */
   const updateStatus = useCallback(async (leadId, newStatus) => {
-    // Snapshot for rollback
     setLeads((prev) => {
       const snapshot = prev;
       const updated = prev.map((l) =>
         l.id === leadId ? { ...l, status: newStatus } : l
       );
 
-      // Fire API call; rollback on failure
       api.updateLeadStatus(leadId, newStatus).catch(() => {
         setLeads(snapshot);
         setError('Failed to update status — reverted');
@@ -80,6 +67,26 @@ export function useLeads() {
       setError(err.message || 'Failed to assign lead');
     }
   }, []);
+
+  /* ── Swap Lead ── */
+  const swapLead = useCallback(async (leadId, targetEmployeeId, targetEmployeeName, reason) => {
+    try {
+      const updated = await api.swapLead(
+        leadId,
+        targetEmployeeId,
+        targetEmployeeName,
+        reason,
+        user?.id,
+        user?.name
+      );
+      setLeads((prev) =>
+        prev.map((l) => (l.id === leadId ? { ...l, ...updated } : l))
+      );
+    } catch (err) {
+      setError(err.message || 'Failed to swap lead');
+      throw err;
+    }
+  }, [user?.id, user?.name]);
 
   /* ── Delete Lead ── */
   const deleteLead = useCallback(async (leadId) => {
@@ -159,6 +166,7 @@ export function useLeads() {
     error,
     updateStatus,
     assignLead,
+    swapLead,
     deleteLead,
     updateLeadDetails,
     deleteAllLeads,

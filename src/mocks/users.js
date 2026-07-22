@@ -7,14 +7,6 @@ import { ROLES } from '../utils/roles';
 const mockUsers = [
   {
     id: 'usr_001',
-    name: 'Rajesh Kumar',
-    email: 'superadmin@leadtracker.com',
-    password: 'admin123',
-    role: ROLES.SUPER_ADMIN,
-    avatar: null,
-  },
-  {
-    id: 'usr_002',
     name: 'Priya Sharma',
     email: 'admin@leadtracker.com',
     password: 'admin123',
@@ -22,7 +14,7 @@ const mockUsers = [
     avatar: null,
   },
   {
-    id: 'usr_003',
+    id: 'usr_002',
     name: 'Amit Patel',
     email: 'employee@leadtracker.com',
     password: 'emp123',

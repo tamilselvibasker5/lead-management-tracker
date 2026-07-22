@@ -5,6 +5,7 @@ import Button from '../components/common/Button';
 import AddEmployeeModal from '../components/employees/AddEmployeeModal';
 import EditEmployeeModal from '../components/employees/EditEmployeeModal';
 import Spinner from '../components/common/Spinner';
+import { Building2, Pencil, Trash2, UserPlus } from 'lucide-react';
 
 /**
  * Admin-only page for managing employees.
@@ -45,8 +46,8 @@ export default function EmployeesPage() {
         >
           Employees
         </h2>
-        <Button variant="primary" onClick={() => setModalOpen(true)}>
-          + Add Employee
+        <Button variant="primary" onClick={() => setModalOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+          <UserPlus size={16} /> Add Employee
         </Button>
       </div>
 
@@ -62,8 +63,8 @@ export default function EmployeesPage() {
               color: 'var(--color-text-dimmed)',
             }}
           >
-            <div style={{ fontSize: '2.5rem', marginBottom: '0.5rem' }}>
-              🏢
+            <div style={{ marginBottom: '0.5rem', display: 'flex', justifyContent: 'center' }}>
+              <Building2 size={40} />
             </div>
             <div style={{ fontWeight: 500 }}>No employees yet</div>
           </div>
@@ -85,7 +86,7 @@ export default function EmployeesPage() {
                   <td className="employees-table__name" title={emp.name}>{emp.name}</td>
                   <td className="employees-table__secondary" title={emp.email}>{emp.email}</td>
                   <td className="employees-table__secondary" title={emp.phone}>{emp.phone}</td>
-                  <td className="employees-table__secondary" title={emp.location}>{emp.location || '—'}</td>
+                  <td className="employees-table__secondary" title={emp.location || '—'}>{emp.location || '—'}</td>
                   <td>
                     <span className="leads-table__assigned">
                       {ROLE_LABELS[emp.role] || emp.role}
@@ -98,16 +99,18 @@ export default function EmployeesPage() {
                         size="sm"
                         onClick={() => setEditingEmployee(emp)}
                         title="Edit Employee"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                       >
-                        ✏️ Edit
+                        <Pencil size={14} /> Edit
                       </Button>
                       <Button
                         variant="danger"
                         size="sm"
                         onClick={() => handleDelete(emp)}
                         title="Remove Employee"
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                       >
-                        🗑 Remove
+                        <Trash2 size={14} /> Remove
                       </Button>
                     </div>
                   </td>

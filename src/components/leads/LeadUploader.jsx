@@ -179,6 +179,8 @@ function formatFileSize(bytes) {
  *
  * @param {{ onImportComplete?: () => void }} props
  */
+import { UploadCloud, AlertTriangle, CheckCircle2, FileSpreadsheet, X } from 'lucide-react';
+
 export default function LeadUploader({ onImportComplete }) {
   const { user, role } = useAuth();
   /* ── State ── */
@@ -339,15 +341,13 @@ export default function LeadUploader({ onImportComplete }) {
        *   ]
        * }
        */
-      const payload = {
-        leads: parsedData.rows.map((row) => ({
-          ...row,
-          createdBy: user?.id || null,
-          createdByRole: role || null,
-        })),
-      };
+      const rowsToImport = parsedData.rows.map((row) => ({
+        ...row,
+        createdBy: user?.id || null,
+        createdByRole: role || null,
+      }));
 
-      await api.bulkImportLeads(payload);
+      await api.bulkImportLeads(rowsToImport, user?.id, role);
 
       setSuccess(
         `Successfully imported ${parsedData.rows.length} lead${parsedData.rows.length !== 1 ? 's' : ''}!`
@@ -396,7 +396,7 @@ export default function LeadUploader({ onImportComplete }) {
             onChange={onFileChange}
             id="lead-file-upload"
           />
-          <span className="lead-uploader__dropzone-icon">📤</span>
+          <span className="lead-uploader__dropzone-icon"><UploadCloud size={40} color="var(--color-primary)" /></span>
           <div className="lead-uploader__dropzone-title">
             Drag & drop your Excel file here
           </div>
@@ -411,15 +411,15 @@ export default function LeadUploader({ onImportComplete }) {
 
       {/* ── Error ── */}
       {error && (
-        <div className="lead-uploader__error">
-          <span>⚠️</span> {error}
+        <div className="lead-uploader__error" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <AlertTriangle size={18} /> {error}
         </div>
       )}
 
       {/* ── Success ── */}
       {success && (
-        <div className="lead-uploader__success">
-          <span>✅</span> {success}
+        <div className="lead-uploader__success" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <CheckCircle2 size={18} /> {success}
         </div>
       )}
 
@@ -427,7 +427,7 @@ export default function LeadUploader({ onImportComplete }) {
       {file && parsedData && (
         <div className="lead-uploader__file-info">
           <div className="lead-uploader__file-details">
-            <div className="lead-uploader__file-icon">📄</div>
+            <div className="lead-uploader__file-icon"><FileSpreadsheet size={24} color="var(--color-primary)" /></div>
             <div>
               <div className="lead-uploader__file-name">{file.name}</div>
               <div className="lead-uploader__file-meta">
@@ -441,7 +441,7 @@ export default function LeadUploader({ onImportComplete }) {
             onClick={handleRemoveFile}
             title="Remove file"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
       )}

@@ -1,41 +1,89 @@
 /* ═══════════════════════════════════════════════════════
-   Lead Management Tracker — Design System
+   Lead Management Tracker — Minimalistic & Clean Design System
    ═══════════════════════════════════════════════════════ */
 
-/* ── Font ── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* ── Fonts ── */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* ── Design tokens ── */
+/* ── Global Tokens (Dark Default) ── */
 :root {
-  /* Typography */
-  --font-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-primary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
-  /* Colors — dark-mode first */
-  --color-bg: #0f1117;
-  --color-surface: #161822;
-  --color-surface-elevated: #1e2030;
-  --color-border: #2a2d3e;
+  /* Theme: Dark Minimal */
+  --color-bg: #090d16;
+  --color-surface: #111726;
+  --color-surface-elevated: #182032;
+  --color-border: #1e293b;
+  --color-border-subtle: #162032;
 
-  --color-text: #e8eaed;
-  --color-text-muted: #9ca3af;
-  --color-text-dimmed: #6b7280;
+  --color-text: #f8fafc;
+  --color-text-muted: #94a3b8;
+  --color-text-dimmed: #64748b;
 
   --color-primary: #6366f1;
   --color-primary-hover: #4f46e5;
-  --color-danger: #ef4444;
-  --color-success: #22c55e;
+  --color-primary-light: rgba(99, 102, 241, 0.15);
+
+  --color-danger: #f43f5e;
+  --color-danger-hover: #e11d48;
+  --color-danger-light: rgba(244, 63, 94, 0.15);
+
+  --color-success: #10b981;
+  --color-success-light: rgba(16, 185, 129, 0.15);
+
   --color-warning: #f59e0b;
-  --color-info: #3b82f6;
+  --color-warning-light: rgba(245, 158, 11, 0.15);
+
+  --color-info: #06b6d4;
+  --color-info-light: rgba(6, 182, 212, 0.15);
 
   /* Radii */
   --radius-sm: 6px;
   --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 30px -4px rgba(0, 0, 0, 0.4);
+
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Theme: Light Minimal ── */
+[data-theme="light"] {
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-elevated: #f1f5f9;
+  --color-border: #e2e8f0;
+  --color-border-subtle: #f8fafc;
+
+  --color-text: #0f172a;
+  --color-text-muted: #475569;
+  --color-text-dimmed: #94a3b8;
+
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-light: rgba(79, 70, 229, 0.08);
+
+  --color-danger: #e11d48;
+  --color-danger-hover: #be123c;
+  --color-danger-light: rgba(225, 29, 72, 0.08);
+
+  --color-success: #059669;
+  --color-success-light: rgba(5, 150, 105, 0.08);
+
+  --color-warning: #d97706;
+  --color-warning-light: rgba(217, 119, 6, 0.08);
+
+  --color-info: #0891b2;
+  --color-info-light: rgba(8, 145, 178, 0.08);
+
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.08);
 }
 
 /* ── Reset ── */
@@ -59,15 +107,18 @@ body {
   color: var(--color-text);
   line-height: 1.6;
   min-height: 100vh;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
 a {
   color: var(--color-primary);
   text-decoration: none;
+  transition: color var(--transition-fast);
 }
 
 a:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  opacity: 0.9;
 }
 
 img {
@@ -75,7 +126,7 @@ img {
   display: block;
 }
 
-/* ── Scrollbar (WebKit) ── */
+/* ── Custom Scrollbars ── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -96,6 +147,6 @@ img {
 
 /* ── Selection ── */
 ::selection {
-  background: rgba(99, 102, 241, 0.3);
-  color: #fff;
+  background: var(--color-primary-light);
+  color: var(--color-primary);
 }

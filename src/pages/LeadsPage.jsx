@@ -8,15 +8,17 @@ import AddLeadModal from '../components/leads/AddLeadModal';
 import Button from '../components/common/Button';
 import { ROLES } from '../utils/roles';
 
+import { Plus } from 'lucide-react';
+
 /**
  * Full leads page — just the LeadsTable in a standalone view.
  */
 export default function LeadsPage() {
   const { role } = useAuth();
-  const { leads, loading, updateStatus, updateLeadDetails, deleteLead, deleteAllLeads, addLead, addLeadActivity } = useLeads();
+  const { leads, loading, updateStatus, assignLead, swapLead, updateLeadDetails, deleteLead, deleteAllLeads, addLead, addLeadActivity } = useLeads();
   const { employees } = useEmployees();
 
-  const isAdminOrAbove = role === ROLES.ADMIN || role === ROLES.SUPER_ADMIN;
+  const isAdmin = role === ROLES.ADMIN;
 
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -65,9 +67,11 @@ export default function LeadsPage() {
         >
           {role === ROLES.EMPLOYEE ? 'My Leads' : 'All Leads'}
         </h2>
-        <Button variant="primary" onClick={() => setAddModalOpen(true)}>
-          + Add Lead
-        </Button>
+        {isAdmin && (
+          <Button variant="primary" onClick={() => setAddModalOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Plus size={16} /> Add Lead
+          </Button>
+        )}
       </div>
 
       <LeadsTable
@@ -75,8 +79,13 @@ export default function LeadsPage() {
         loading={loading}
         employees={employees}
         currentUserRole={role}
+        hideImportExcel={role === ROLES.EMPLOYEE}
         onStatusChange={updateStatus}
+        onAssignLead={assignLead}
+        onSwapLead={swapLead}
         onEditClick={handleViewClick}
+        onUpdateLeadDetails={updateLeadDetails}
+        onAddActivity={addLeadActivity}
         onDeleteClick={handleDeleteClick}
         onDeleteAllClick={handleDeleteAllClick}
       />

@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
+import NotepadModal from './NotepadModal';
+import { Phone, Mail, Users, FileText, Plus, Notebook } from 'lucide-react';
+import './Notepad.css';
 
 export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddActivity }) {
   const [activeTab, setActiveTab] = useState('info'); // 'info' | 'activity'
@@ -16,6 +19,7 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
   });
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState('');
+  const [showNotepadModal, setShowNotepadModal] = useState(false);
 
   // Activity Tab State
   const [activityText, setActivityText] = useState('');
@@ -107,13 +111,13 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>
-            <span>📞</span> <strong>{calls}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Calls</span>
+            <Phone size={13} color="var(--color-primary)" /> <strong>{calls}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Calls</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>
-            <span>✉️</span> <strong>{emails}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Emails</span>
+            <Mail size={13} color="var(--color-primary)" /> <strong>{emails}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Emails</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>
-            <span>🤝</span> <strong>{meetings}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Meetings</span>
+            <Users size={13} color="var(--color-primary)" /> <strong>{meetings}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Meetings</span>
           </div>
         </div>
       </div>
@@ -204,13 +208,43 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
             </div>
           </div>
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>Notes</label>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)' }}>Lead Notes</label>
+              <button
+                type="button"
+                onClick={() => setShowNotepadModal(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--color-primary)',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.3rem',
+                }}
+              >
+                <FileText size={14} /> Open Notes Popup Modal
+              </button>
+            </div>
             <textarea
               name="notes"
               value={formData.notes}
               onChange={handleInfoChange}
-              rows={3}
-              style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', resize: 'vertical' }}
+              rows={5}
+              placeholder="Type comprehensive lead notes..."
+              style={{
+                width: '100%',
+                padding: '0.75rem 0.85rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)',
+                color: 'var(--color-text)',
+                fontSize: '0.9rem',
+                lineHeight: '1.5',
+                resize: 'vertical',
+              }}
             />
           </div>
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -227,29 +261,46 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
       {activeTab === 'activity' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           {/* Add Activity Form */}
-          <form onSubmit={handleActivitySubmit} style={{ background: 'var(--color-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-            <h4 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', color: 'var(--color-text)' }}>Log Activity</h4>
-            {activityError && <div style={{ color: 'var(--color-error)', fontSize: '0.875rem', marginBottom: '1rem' }}>{activityError}</div>}
-            
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
+          <form onSubmit={handleActivitySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--color-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <FileText size={16} color="var(--color-primary)" /> Log Lead Activity
+              </h4>
               <select
                 value={activityType}
                 onChange={(e) => setActivityType(e.target.value)}
-                style={{ padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+                style={{ padding: '0.4rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)', fontSize: '0.85rem', fontWeight: 600 }}
               >
-                <option value="note">Note</option>
-                <option value="call">Call</option>
-                <option value="email">Email</option>
-                <option value="meeting">Meeting</option>
+                <option value="note">📝 General Note</option>
+                <option value="call">📞 Phone Call</option>
+                <option value="email">✉️ Email Sent</option>
+                <option value="meeting">👥 Meeting / Demo</option>
               </select>
-              <input
-                type="text"
-                placeholder="Describe activity..."
-                value={activityText}
-                onChange={(e) => setActivityText(e.target.value)}
-                style={{ flex: 1, padding: '0.5rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
-              />
-              <Button variant="primary" type="submit" loading={savingActivity}>Add</Button>
+            </div>
+            {activityError && <div style={{ color: 'var(--color-error)', fontSize: '0.875rem' }}>{activityError}</div>}
+
+            <textarea
+              placeholder="Describe activity, phone discussion summary, meeting observation..."
+              value={activityText}
+              onChange={(e) => setActivityText(e.target.value)}
+              rows={5}
+              style={{
+                width: '100%',
+                padding: '0.75rem 0.85rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)',
+                color: 'var(--color-text)',
+                fontSize: '0.9rem',
+                lineHeight: '1.5',
+                resize: 'vertical',
+              }}
+            />
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Button variant="primary" type="submit" loading={savingActivity} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                <Plus size={15} /> Add Activity Record
+              </Button>
             </div>
           </form>
 
@@ -262,15 +313,30 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
                 <div key={act.id} style={{ padding: '1rem', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-primary)' }}>{act.type}</span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-dimmed)' }}>{new Date(act.date).toLocaleString()}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-dimmed)' }}>{new Date(act.date || act.timestamp).toLocaleString()}</span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-text)' }}>{act.text}</p>
+                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-text)', whiteSpace: 'pre-wrap' }}>{act.note || act.text}</p>
                 </div>
               ))
             )}
           </div>
         </div>
       )}
+
+      {/* Popup Notes & Activity Modal */}
+      <NotepadModal
+        isOpen={showNotepadModal}
+        onClose={() => setShowNotepadModal(false)}
+        lead={lead}
+        initialNotes={formData.notes}
+        onSave={async (leadId, updates) => {
+          setFormData((prev) => ({ ...prev, notes: updates.notes }));
+          if (onSave) {
+            await onSave(leadId, updates);
+          }
+        }}
+        onAddActivity={onAddActivity}
+      />
     </Modal>
   );
 }

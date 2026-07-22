@@ -1,44 +1,47 @@
 .lead-status-dropdown .dropdown__select {
-  border: none;
-  padding: 0.3rem 1.8rem 0.3rem 0.5rem;
-  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.35rem 1.8rem 0.35rem 0.65rem;
+  border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.02em;
+  transition: all var(--transition-fast);
 }
 
-/* Status color coding */
+/* Status color coding with smooth contrast */
 .lead-status-dropdown--New .dropdown__select {
-  background-color: rgba(59, 130, 246, 0.12);
-  color: #60a5fa;
+  background-color: var(--color-info-light);
+  color: var(--color-info);
+  border-color: rgba(6, 182, 212, 0.2);
 }
 
 .lead-status-dropdown--Contacted .dropdown__select {
-  background-color: rgba(251, 191, 36, 0.12);
-  color: #fbbf24;
+  background-color: var(--color-warning-light);
+  color: var(--color-warning);
+  border-color: rgba(245, 158, 11, 0.2);
 }
 
-.lead-status-dropdown--Responded .dropdown__select {
-  background-color: rgba(34, 197, 94, 0.12);
-  color: #4ade80;
+.lead-status-dropdown--Responded .dropdown__select,
+.lead-status-dropdown--Won .dropdown__select {
+  background-color: var(--color-success-light);
+  color: var(--color-success);
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
 .lead-status-dropdown--Qualified .dropdown__select {
-  background-color: rgba(139, 92, 246, 0.12);
-  color: #a78bfa;
+  background-color: var(--color-primary-light);
+  color: var(--color-primary);
+  border-color: rgba(99, 102, 241, 0.2);
 }
 
 .lead-status-dropdown--Proposal-Sent .dropdown__select {
-  background-color: rgba(249, 115, 22, 0.12);
-  color: #fb923c;
-}
-
-.lead-status-dropdown--Won .dropdown__select {
-  background-color: rgba(16, 185, 129, 0.12);
-  color: #10b981;
+  background-color: var(--color-warning-light);
+  color: var(--color-warning);
+  border-color: rgba(245, 158, 11, 0.2);
 }
 
 .lead-status-dropdown--Lost .dropdown__select {
-  background-color: rgba(239, 68, 68, 0.12);
-  color: #f87171;
+  background-color: var(--color-danger-light);
+  color: var(--color-danger);
+  border-color: rgba(244, 63, 94, 0.2);
 }

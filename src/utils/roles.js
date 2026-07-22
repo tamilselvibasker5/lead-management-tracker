@@ -2,7 +2,6 @@
  * Role constants used throughout the application.
  */
 export const ROLES = {
-  SUPER_ADMIN: 'super_admin',
   ADMIN: 'admin',
   EMPLOYEE: 'employee',
 };
@@ -25,16 +24,7 @@ export const PERMISSIONS = {
  * Maps each role to its set of granted permissions.
  */
 export const ROLE_PERMISSIONS = {
-  [ROLES.SUPER_ADMIN]: new Set(Object.values(PERMISSIONS)),
-  [ROLES.ADMIN]: new Set([
-    PERMISSIONS.VIEW_ALL_LEADS,
-    PERMISSIONS.ASSIGN_LEADS,
-    PERMISSIONS.UPDATE_LEAD_STATUS,
-    PERMISSIONS.MANAGE_EMPLOYEES,
-    PERMISSIONS.VIEW_DASHBOARD_STATS,
-    PERMISSIONS.VIEW_ASSIGNMENT_PAGE,
-    PERMISSIONS.VIEW_EMPLOYEES_PAGE,
-  ]),
+  [ROLES.ADMIN]: new Set(Object.values(PERMISSIONS)),
   [ROLES.EMPLOYEE]: new Set([
     PERMISSIONS.VIEW_OWN_LEADS,
     PERMISSIONS.UPDATE_LEAD_STATUS,
@@ -56,7 +46,6 @@ export function hasPermission(role, permission) {
  * Friendly labels for display in the UI.
  */
 export const ROLE_LABELS = {
-  [ROLES.SUPER_ADMIN]: 'Super Admin',
   [ROLES.ADMIN]: 'Admin',
   [ROLES.EMPLOYEE]: 'Employee',
 };

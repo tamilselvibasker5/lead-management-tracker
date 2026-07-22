@@ -3,6 +3,7 @@ import * as XLSX from 'xlsx';
 import Button from '../common/Button';
 import Spinner from '../common/Spinner';
 import { autoAssignLead } from '../../utils/assignmentRules';
+import * as api from '../../services/api';
 import './LeadsTable.css';
 
 /**
@@ -17,28 +18,120 @@ import './LeadsTable.css';
  *   onDeleteClick?: (lead: object) => void,
  * }} props
  */
+import { Inbox, Check, X, Pencil, UploadCloud, Search, Trash2, ArrowUpDown, Filter, Notebook, ArrowRightLeft } from 'lucide-react';
+import NotepadModal from './NotepadModal';
+import SwapLeadModal from './SwapLeadModal';
+import { useAuth } from '../../contexts/AuthContext';
+
 export default function LeadsTable({
   leads: propLeads,
   loading = false,
   employees = [],
+  currentUserRole,
+  onEditClick,
   onDeleteClick,
   onDeleteAllClick,
   onAssignLead,
+  onSwapLead,
+  onUpdateLeadDetails,
+  onAddActivity,
   showAssignAction = false,
+  hideImportExcel = false,
 }) {
+  const { user } = useAuth();
   const fileInputRef = useRef(null);
 
   // Default set of mock rows (empty by default)
   const defaultMockData = [];
 
-  // Initialize state with default mock data
-  const [leads, setLeads] = useState(defaultMockData);
+  // Internal state tracking leads
+  const [leads, setLeads] = useState(propLeads || defaultMockData);
 
-  // Selected lead IDs for multi-selection
+  useEffect(() => {
+    if (propLeads) {
+      setLeads(propLeads);
+    }
+  }, [propLeads]);
+
+  // Bulk actions state
   const [selectedLeadIds, setSelectedLeadIds] = useState([]);
 
   // Active sorting order state: 'oldest' | 'newest'
   const [sortOrder, setSortOrder] = useState('oldest');
+
+  // Popup Notepad Modal state
+  const [activeNotepadLead, setActiveNotepadLead] = useState(null);
+
+  // Swap Lead Modal state
+  const [swapLeadModalOpen, setSwapLeadModalOpen] = useState(false);
+  const [leadToSwap, setLeadToSwap] = useState(null);
+
+  const handleOpenSwapModal = (lead) => {
+    setLeadToSwap(lead);
+    setSwapLeadModalOpen(true);
+  };
+
+  const handleConfirmSwap = async (leadId, targetEmployeeId, targetEmployeeName, reason) => {
+    // Local optimistic update
+    setLeads((prev) =>
+      prev.map((l) =>
+        l.id === leadId
+          ? { ...l, assignedTo: targetEmployeeName, assignedToRaw: targetEmployeeId }
+          : l
+      )
+    );
+
+    try {
+      if (onSwapLead) {
+        await onSwapLead(leadId, targetEmployeeId, targetEmployeeName, reason);
+      } else {
+        await api.swapLead(
+          leadId,
+          targetEmployeeId,
+          targetEmployeeName,
+          reason,
+          user?.id,
+          user?.name
+        );
+      }
+    } catch (err) {
+      console.error('Failed to swap lead:', err);
+    }
+  };
+
+
+  const handleOpenNotepad = (lead) => {
+    setActiveNotepadLead(lead);
+  };
+
+  const handleSaveNotepad = async (leadId, updates) => {
+    const newNotes = updates.notes;
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, notes: newNotes } : l))
+    );
+    if (onUpdateLeadDetails) {
+      try {
+        await onUpdateLeadDetails(leadId, { notes: newNotes });
+      } catch (err) {
+        console.error('Failed to update notes:', err);
+      }
+    }
+  };
+
+  // Dropdown filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [platformFilter, setPlatformFilter] = useState('all');
+  const [assignmentFilter, setAssignmentFilter] = useState('all');
+
+  // Dynamically extract unique platform options from leads
+  const platformOptions = useMemo(() => {
+    const platforms = new Set();
+    leads.forEach((l) => {
+      if (l.platform && l.platform !== '—') platforms.add(l.platform);
+    });
+    return Array.from(platforms);
+  }, [leads]);
 
   // Reactively compute the sorted leads array
   const sortedLeads = useMemo(() => {
@@ -48,6 +141,49 @@ export default function LeadsTable({
       return sortOrder === 'oldest' ? dateA - dateB : dateB - dateA;
     });
   }, [leads, sortOrder]);
+
+  // Filter leads based on search query, status dropdown, platform dropdown, and assignment dropdown
+  const filteredLeads = useMemo(() => {
+    return sortedLeads.filter((l) => {
+      if (searchTerm.trim()) {
+        const term = searchTerm.toLowerCase().trim();
+        const matchesSearch =
+          (l.name && l.name.toLowerCase().includes(term)) ||
+          (l.email && l.email.toLowerCase().includes(term)) ||
+          (l.phone && l.phone.toLowerCase().includes(term)) ||
+          (l.location && l.location.toLowerCase().includes(term)) ||
+          (l.platform && l.platform.toLowerCase().includes(term)) ||
+          (l.notes && l.notes.toLowerCase().includes(term));
+        if (!matchesSearch) return false;
+      }
+
+      if (statusFilter !== 'all') {
+        if ((l.status || 'New').toLowerCase() !== statusFilter.toLowerCase()) {
+          return false;
+        }
+      }
+
+      if (platformFilter !== 'all') {
+        if ((l.platform || '').toLowerCase() !== platformFilter.toLowerCase()) {
+          return false;
+        }
+      }
+
+      if (assignmentFilter !== 'all') {
+        const raw = String(l.assignedToRaw || '').trim();
+        const name = String(l.assignedTo || '').trim();
+
+        const isAssigned =
+          (raw !== '' && raw !== 'null' && raw !== 'undefined' && raw !== 'Unassigned' && raw !== '—') ||
+          (name !== '' && name !== 'null' && name !== 'undefined' && name !== 'Unassigned' && name !== '—');
+
+        if (assignmentFilter === 'assigned' && !isAssigned) return false;
+        if (assignmentFilter === 'unassigned' && isAssigned) return false;
+      }
+
+      return true;
+    });
+  }, [sortedLeads, searchTerm, statusFilter, platformFilter, assignmentFilter]);
 
   // Synchronize state when external leads are passed in
   useEffect(() => {
@@ -312,7 +448,7 @@ export default function LeadsTable({
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
         const data = new Uint8Array(event.target?.result);
         const workbook = XLSX.read(data, { type: 'array' });
@@ -378,16 +514,19 @@ export default function LeadsTable({
           };
         });
 
-        // Add imported leads to current table state & save to localStorage
-        setLeads((prev) => {
-          const updated = [...prev, ...mappedLeads];
-          try {
-            localStorage.setItem('lead_tracker_leads', JSON.stringify(updated));
-          } catch (e) {
-            console.error('Error saving to localStorage:', e);
+        // Save imported leads to MongoDB via API backend
+        try {
+          const savedLeads = await api.bulkImportLeads(mappedLeads, user?.id, currentUserRole);
+          if (Array.isArray(savedLeads) && savedLeads.length > 0) {
+            setLeads((prev) => [...savedLeads, ...prev]);
+          } else {
+            setLeads((prev) => [...mappedLeads, ...prev]);
           }
-          return updated;
-        });
+        } catch (apiErr) {
+          console.error('Failed to save imported leads to backend:', apiErr);
+          setLeads((prev) => [...mappedLeads, ...prev]);
+        }
+
       } catch (err) {
         console.error('Error importing Excel file:', err);
         alert('Could not parse Excel file. Please make sure it is a valid .xlsx or .xls file.');
@@ -406,41 +545,117 @@ export default function LeadsTable({
   return (
     <div className="leads-table-wrapper">
       {/* Toolbar */}
-      <div className="leads-table__toolbar">
-        <h3 className="leads-table__title">Leads Registry</h3>
-        <span className="leads-table__filter-count" style={{ flex: 1, marginLeft: '1rem' }}>
-          {leads.length} lead{leads.length !== 1 ? 's' : ''}
-        </span>
+      <div className="leads-table__toolbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', padding: '1rem 1.25rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <h3 className="leads-table__title">Leads Registry</h3>
+          <span
+            style={{
+              padding: '0.2rem 0.6rem',
+              borderRadius: '999px',
+              background: 'var(--color-surface-elevated)',
+              border: '1px solid var(--color-border)',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              color: 'var(--color-primary)',
+            }}
+          >
+            {filteredLeads.length} {filteredLeads.length === 1 ? 'lead' : 'leads'}
+          </span>
+        </div>
 
-        {/* Sort & Import Control Buttons */}
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+        {/* Search & Actions Group */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', width: '260px' }}>
+            <Search
+              size={16}
+              style={{
+                position: 'absolute',
+                left: '0.75rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--color-text-dimmed)',
+                pointerEvents: 'none',
+              }}
+            />
+            <input
+              type="text"
+              className="leads-table__search"
+              placeholder="Search leads..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ paddingLeft: '2.25rem', width: '100%' }}
+            />
+          </div>
+
+          {/* Status Filter Dropdown */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="leads-table__call-select"
+            style={{ width: 'auto', minWidth: '135px' }}
+            title="Filter by status"
+          >
+            <option value="all">All Statuses</option>
+            <option value="New">New</option>
+            <option value="Contacted">Contacted</option>
+            <option value="Qualified">Qualified</option>
+            <option value="Won">Won</option>
+            <option value="Lost">Lost</option>
+          </select>
+
+          {/* Platform Filter Dropdown */}
+          <select
+            value={platformFilter}
+            onChange={(e) => setPlatformFilter(e.target.value)}
+            className="leads-table__call-select"
+            style={{ width: 'auto', minWidth: '145px' }}
+            title="Filter by platform"
+          >
+            <option value="all">All Platforms</option>
+            {platformOptions.map((plat) => (
+              <option key={plat} value={plat}>
+                {plat}
+              </option>
+            ))}
+          </select>
+
+          {/* Assignment Filter Dropdown */}
+          <select
+            value={assignmentFilter}
+            onChange={(e) => setAssignmentFilter(e.target.value)}
+            className="leads-table__call-select"
+            style={{ width: 'auto', minWidth: '150px' }}
+            title="Filter by assignment status"
+          >
+            <option value="all">All Assignments</option>
+            <option value="assigned">Assigned Leads</option>
+            <option value="unassigned">Unassigned Leads</option>
+          </select>
+
           <Button
             variant="secondary"
             onClick={() => setSortOrder((prev) => (prev === 'oldest' ? 'newest' : 'oldest'))}
             title="Toggle sort order (Oldest / Newest)"
-            style={{ minWidth: '150px' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
           >
-            {sortOrder === 'oldest' ? '⏰ Oldest First' : '⏰ Newest First'}
+            <ArrowUpDown size={15} />
+            {sortOrder === 'oldest' ? 'Oldest First' : 'Newest First'}
           </Button>
-          <Button variant="primary" onClick={triggerFileInput}>
-            📥 Import Excel
-          </Button>
-          {showAssignAction && leads.length > 0 && (
-            <Button
-              variant="primary"
-              onClick={handleAutoAssignAll}
-              title="Automatically assign leads to employees matching region and language"
-            >
-              ⚡ Auto Assign
+
+          {!hideImportExcel && (
+            <Button variant="primary" onClick={triggerFileInput} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <UploadCloud size={16} /> Import Excel
             </Button>
           )}
+
           {selectedLeadIds.length > 0 && (
             <Button
               variant="danger"
               onClick={handleDeleteSelected}
               title="Delete selected leads"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
             >
-              🗑️ Delete Selected ({selectedLeadIds.length})
+              <Trash2 size={16} /> Delete Selected ({selectedLeadIds.length})
             </Button>
           )}
         </div>
@@ -454,9 +669,9 @@ export default function LeadsTable({
         />
       </div>
 
-      {leads.length === 0 ? (
+      {filteredLeads.length === 0 ? (
         <div className="leads-table__empty">
-          <div className="leads-table__empty-icon">📭</div>
+          <div className="leads-table__empty-icon"><Inbox size={36} color="var(--color-text-dimmed)" /></div>
           <div className="leads-table__empty-text">No leads found</div>
         </div>
       ) : (
@@ -485,7 +700,7 @@ export default function LeadsTable({
             </tr>
           </thead>
           <tbody>
-            {sortedLeads.map((lead) => {
+            {filteredLeads.map((lead) => {
               const { rowClass, statusText } = getExpiryDetails(lead.createdAt);
               return (
                 <tr key={lead.id} className={rowClass}>
@@ -553,6 +768,15 @@ export default function LeadsTable({
                         }
                         onChange={async (e) => {
                           const val = e.target.value;
+                          const selectedEmp = employees.find((emp) => emp.id === val);
+                          const newName = selectedEmp ? selectedEmp.name : 'Unassigned';
+                          setLeads((prev) =>
+                            prev.map((l) =>
+                              l.id === lead.id
+                                ? { ...l, assignedTo: newName, assignedToRaw: val || null }
+                                : l
+                            )
+                          );
                           if (onAssignLead) {
                             await onAssignLead(lead.id, val || null);
                           }
@@ -598,8 +822,27 @@ export default function LeadsTable({
                       ))}
                     </select>
                   </td>
-                  <td className="leads-table__secondary leads-table__notes" title={lead.notes}>
-                    {lead.notes || '—'}
+                  <td className="leads-table__secondary leads-table__notes" style={{ minWidth: '180px' }}>
+                    <div
+                      onClick={() => handleOpenNotepad(lead)}
+                      title="Click to open Popup Notepad"
+                      style={{
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justify: 'space-between',
+                        padding: '0.35rem 0.6rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(99, 102, 241, 0.08)',
+                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '0.825rem', color: 'var(--color-text)' }}>
+                        {lead.notes || '—'}
+                      </span>
+                      <Notebook size={14} style={{ opacity: 0.85, flexShrink: 0, marginLeft: '0.4rem', color: 'var(--color-primary)' }} />
+                    </div>
                   </td>
                   <td>
                     <div className="leads-table__actions" style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
@@ -628,6 +871,17 @@ export default function LeadsTable({
                           No contact
                         </span>
                       )}
+                      {currentUserRole === 'employee' && (
+                        <Button
+                          variant="secondary"
+                          className="leads-table__icon-btn"
+                          onClick={() => handleOpenSwapModal(lead)}
+                          title="Swap / Reassign Lead to another employee"
+                          style={{ color: 'var(--color-primary)', borderColor: 'rgba(99, 102, 241, 0.3)' }}
+                        >
+                          <ArrowRightLeft size={16} />
+                        </Button>
+                      )}
                       <Button
                         variant="secondary"
                         className="leads-table__icon-btn"
@@ -652,6 +906,28 @@ export default function LeadsTable({
           </tbody>
         </table>
       )}
+
+      {/* Popup Notepad Modal */}
+      <NotepadModal
+        isOpen={!!activeNotepadLead}
+        onClose={() => setActiveNotepadLead(null)}
+        lead={activeNotepadLead}
+        onSave={handleSaveNotepad}
+        onAddActivity={onAddActivity}
+      />
+
+      {/* Swap Lead Modal */}
+      <SwapLeadModal
+        isOpen={swapLeadModalOpen}
+        onClose={() => {
+          setSwapLeadModalOpen(false);
+          setLeadToSwap(null);
+        }}
+        lead={leadToSwap}
+        employees={employees}
+        currentUserId={user?.id}
+        onSwap={handleConfirmSwap}
+      />
     </div>
   );
 }

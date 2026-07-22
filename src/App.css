@@ -6,14 +6,34 @@
   min-height: 100vh;
 }
 
-/* ── Form input shared base (used by modals, pages, etc.) ── */
+/* ── Form inputs shared minimalist styling ── */
 input,
 select,
 textarea {
   font-family: var(--font-primary);
+  background: var(--color-surface-elevated);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
-/* ── Utility: visually hidden ── */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-dimmed);
+}
+
+/* ── Visually hidden utility ── */
 .sr-only {
   position: absolute;
   width: 1px;

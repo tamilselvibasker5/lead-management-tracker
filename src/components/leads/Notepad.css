@@ -1,0 +1,72 @@
+/* ── Modern Notepad Component Styles ── */
+.notepad-paper {
+  position: relative;
+  background: var(--color-surface-elevated);
+  background-image: repeating-linear-gradient(
+    transparent,
+    transparent 29px,
+    var(--color-border) 30px
+  );
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header strip */
+.notepad-header-strip {
+  background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%);
+  color: #ffffff;
+  padding: 0.6rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 0.85rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.notepad-holes {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.notepad-hole {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-bg);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.notepad-textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 0.925rem;
+  line-height: 30px;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  resize: vertical;
+  min-height: 160px;
+}
+
+.notepad-textarea::placeholder {
+  color: var(--color-text-dimmed);
+  font-style: italic;
+}
+
+/* Margin line */
+.notepad-margin-line {
+  position: absolute;
+  top: 36px;
+  bottom: 0;
+  left: 2rem;
+  width: 2px;
+  background: rgba(244, 63, 94, 0.3);
+  pointer-events: none;
+}

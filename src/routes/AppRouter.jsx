@@ -9,6 +9,7 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import LoginPage from '../pages/LoginPage';
 import DashboardPage from '../pages/DashboardPage';
 import LeadsPage from '../pages/LeadsPage';
+import ProductsPage from '../pages/ProductsPage';
 import AssignmentPage from '../pages/AssignmentPage';
 import EmployeesPage from '../pages/EmployeesPage';
 import UnauthorizedPage from '../pages/UnauthorizedPage';
@@ -29,14 +30,16 @@ export default function AppRouter() {
         <Route element={<DashboardLayout />}>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/leads" element={<LeadsPage />} />
+          <Route path="/products" element={<ProductsPage />} />
           <Route path="/import" element={<ImportPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
-          {/* ── Admin + Super Admin only ── */}
+          {/* ── Admin only ── */}
           <Route
             element={
               <PrivateRoute
-                allowedRoles={[ROLES.SUPER_ADMIN, ROLES.ADMIN]}
+                allowedRoles={[ROLES.ADMIN]}
               />
             }
           >
@@ -44,16 +47,6 @@ export default function AppRouter() {
             <Route path="/employees" element={<EmployeesPage />} />
           </Route>
 
-          {/* ── Super Admin ONLY ── */}
-          <Route
-            element={
-              <PrivateRoute
-                allowedRoles={[ROLES.SUPER_ADMIN]}
-              />
-            }
-          >
-            <Route path="/settings" element={<SettingsPage />} />
-          </Route>
         </Route>
       </Route>
 

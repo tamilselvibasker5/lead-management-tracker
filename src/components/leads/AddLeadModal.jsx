@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
-import { LEAD_STATUSES } from '../../mocks/leads';
+import { LEAD_STATUSES } from '../../utils/leadStatuses';
 
 export default function AddLeadModal({ isOpen, onClose, onSave }) {
   const [formData, setFormData] = useState({
