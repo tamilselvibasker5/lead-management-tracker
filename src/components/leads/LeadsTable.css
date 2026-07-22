@@ -305,26 +305,40 @@
   width: 100%;
 }
 
-.leads-table th,
+.leads-table th {
+  padding: 0.85rem 0.65rem !important;
+  white-space: nowrap;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
 .leads-table td {
-  padding: 1rem 1.25rem !important; /* spacious padding so it doesn't look cramped */
+  padding: 0.85rem 0.65rem !important;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* Specify strict column widths so data is clearly readable and does not wrap awkwardly */
-/* Specify strict column widths so data is clearly readable and does not wrap awkwardly */
-.leads-table th:nth-child(1), .leads-table td:nth-child(1) { width: 110px; } /* Source */
-.leads-table th:nth-child(2), .leads-table td:nth-child(2) { width: 180px; } /* Name */
-.leads-table th:nth-child(3), .leads-table td:nth-child(3) { width: 200px; } /* Email - reduced slightly */
-.leads-table th:nth-child(4), .leads-table td:nth-child(4) { width: 160px; } /* Phone */
-.leads-table th:nth-child(5), .leads-table td:nth-child(5) { width: 140px; } /* Location */
-.leads-table th:nth-child(6), .leads-table td:nth-child(6) { width: 140px; } /* Assigned to */
-.leads-table th:nth-child(7), .leads-table td:nth-child(7) { width: 150px; } /* Days Remaining */
-.leads-table th:nth-child(8), .leads-table td:nth-child(8) { width: 160px; } /* Call Attempts - widened to prevent truncation */
-.leads-table th:nth-child(9), .leads-table td:nth-child(9) { width: 200px; } /* Notes */
-.leads-table th:nth-child(10), .leads-table td:nth-child(10) { width: 140px; } /* Actions */
+/* Specify strict column widths and min-widths so header titles are fully visible without truncation */
+.leads-table th:nth-child(1), .leads-table td:nth-child(1) { width: 44px; min-width: 44px; padding: 0.85rem 0.2rem !important; text-align: center; } /* Checkbox */
+.leads-table th:nth-child(2), .leads-table td:nth-child(2) { width: 140px; min-width: 140px; } /* Platform */
+.leads-table th:nth-child(3), .leads-table td:nth-child(3) { width: 180px; min-width: 180px; } /* Name */
+.leads-table th:nth-child(4), .leads-table td:nth-child(4) { width: 200px; min-width: 200px; } /* Email */
+.leads-table th:nth-child(5), .leads-table td:nth-child(5) { width: 150px; min-width: 150px; } /* Phone */
+.leads-table th:nth-child(6), .leads-table td:nth-child(6) { width: 140px; min-width: 140px; } /* Location */
+.leads-table th:nth-child(7), .leads-table td:nth-child(7) { width: 160px; min-width: 160px; } /* Assigned to */
+.leads-table th:nth-child(8), .leads-table td:nth-child(8) { width: 150px; min-width: 150px; } /* Days Remaining */
+.leads-table th:nth-child(9), .leads-table td:nth-child(9) { width: 160px; min-width: 160px; } /* Call Attempts */
+.leads-table th:nth-child(10), .leads-table td:nth-child(10) { width: 200px; min-width: 200px; } /* Notes */
+.leads-table th:nth-child(11), .leads-table td:nth-child(11) { width: 185px; min-width: 185px; overflow: visible !important; } /* Actions */
+
+.leads-table__checkbox {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: var(--color-primary, #6366f1);
+  vertical-align: middle;
+}
 
 /* ── Icon Button Format ── */
 .leads-table__icon-btn {
@@ -367,6 +381,68 @@
   border-color: var(--color-primary);
   box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
+
+.leads-table__assign-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding: 0.35rem 2rem 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-elevated) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>") no-repeat right 0.75rem center;
+  color: var(--color-text);
+  font-family: var(--font-primary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+}
+
+.leads-table__assign-select:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
+}
+
+/* ── Employees Table Specific Layout & Column Widths ── */
+.employees-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.employees-table th {
+  text-align: left;
+  padding: 0.85rem 0.75rem !important;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-dimmed);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.employees-table td {
+  padding: 0.85rem 0.75rem !important;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.employees-table th:nth-child(1), .employees-table td:nth-child(1) { width: 200px; min-width: 200px; font-weight: 600; } /* Name */
+.employees-table th:nth-child(2), .employees-table td:nth-child(2) { width: 230px; min-width: 230px; } /* Email */
+.employees-table th:nth-child(3), .employees-table td:nth-child(3) { width: 170px; min-width: 170px; } /* Phone */
+.employees-table th:nth-child(4), .employees-table td:nth-child(4) { width: 200px; min-width: 200px; } /* Location / Region */
+.employees-table th:nth-child(5), .employees-table td:nth-child(5) { width: 130px; min-width: 130px; } /* Role */
+.employees-table th:nth-child(6), .employees-table td:nth-child(6) { width: 170px; min-width: 170px; } /* Actions */
 
 
 

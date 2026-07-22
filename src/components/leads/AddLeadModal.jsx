@@ -9,7 +9,7 @@ export default function AddLeadModal({ isOpen, onClose, onSave }) {
     email: '',
     phone: '',
     location: '',
-    source: '',
+    platform: '',
     notes: '',
     status: LEAD_STATUSES.NEW,
   });
@@ -38,7 +38,7 @@ export default function AddLeadModal({ isOpen, onClose, onSave }) {
         email: '',
         phone: '',
         location: '',
-        source: '',
+        platform: '',
         notes: '',
         status: LEAD_STATUSES.NEW,
       });
@@ -100,10 +100,10 @@ export default function AddLeadModal({ isOpen, onClose, onSave }) {
             />
           </div>
           <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>Source</label>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>Platform</label>
             <input
-              name="source"
-              value={formData.source}
+              name="platform"
+              value={formData.platform}
               onChange={handleChange}
               style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
             />

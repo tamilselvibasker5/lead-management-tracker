@@ -56,11 +56,11 @@ export default function DashboardPage() {
   /* ── Analytics Data ── */
   const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
 
-  const sourceData = useMemo(() => {
+  const platformData = useMemo(() => {
     const counts = {};
     leads.forEach((l) => {
-      const src = l.source || 'Unknown';
-      counts[src] = (counts[src] || 0) + 1;
+      const plat = l.platform || l.source || 'Unknown';
+      counts[plat] = (counts[plat] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [leads]);
@@ -189,14 +189,14 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Lead Source Pie Chart */}
+          {/* Lead Platform Pie Chart */}
           <div style={{ background: 'var(--color-surface-elevated)', padding: '1.5rem', borderRadius: 'var(--radius-lg)' }}>
-            <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Lead Sources</h3>
+            <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', fontWeight: 600 }}>Lead Platforms</h3>
             <div style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={sourceData}
+                    data={platformData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
@@ -205,7 +205,7 @@ export default function DashboardPage() {
                     dataKey="value"
                     label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
-                    {sourceData.map((entry, index) => (
+                    {platformData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>

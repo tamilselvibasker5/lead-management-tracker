@@ -1,24 +1,41 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import { ROLES } from '../../utils/roles';
-import './AddEmployeeModal.css';
-
-const INITIAL_FORM = { name: '', email: '', phone: '', location: '', role: ROLES.EMPLOYEE };
 
 /**
- * Modal form for admins to add a new employee.
+ * Modal component for editing an existing employee's details.
  *
  * @param {{
  *   isOpen: boolean,
  *   onClose: () => void,
- *   onAdd: (data: object) => Promise<object>,
+ *   onUpdate: (id: string, data: object) => Promise<object>,
+ *   employee: object|null
  * }} props
  */
-export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
-  const [form, setForm] = useState({ ...INITIAL_FORM });
+export default function EditEmployeeModal({ isOpen, onClose, onUpdate, employee }) {
+  const [form, setForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    location: '',
+    role: ROLES.EMPLOYEE
+  });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (employee) {
+      setForm({
+        name: employee.name || '',
+        email: employee.email || '',
+        phone: employee.phone || '',
+        location: employee.location || '',
+        role: employee.role || ROLES.EMPLOYEE
+      });
+      setErrors({});
+    }
+  }, [employee]);
 
   const handleChange = (field) => (e) => {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
@@ -43,30 +60,22 @@ export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
     }
     try {
       setSubmitting(true);
-      await onAdd(form);
-      setForm({ ...INITIAL_FORM });
-      setErrors({});
+      await onUpdate(employee.id, form);
       onClose();
-    } catch {
-      // Error surfaced by hook
+    } catch (err) {
+      console.error('Failed to update employee:', err);
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleClose = () => {
-    setForm({ ...INITIAL_FORM });
-    setErrors({});
-    onClose();
-  };
-
   const footer = (
     <>
-      <Button variant="ghost" onClick={handleClose} disabled={submitting}>
+      <Button variant="ghost" onClick={onClose} disabled={submitting}>
         Cancel
       </Button>
       <Button variant="primary" onClick={handleSubmit} loading={submitting}>
-        Add Employee
+        Save Changes
       </Button>
     </>
   );
@@ -74,19 +83,18 @@ export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleClose}
-      title="Add Employee"
+      onClose={onClose}
+      title="Edit Employee"
       footer={footer}
     >
       <div className="add-employee__form">
         <div className="add-employee__group">
-          <label className="add-employee__label" htmlFor="emp-name">
+          <label className="add-employee__label" htmlFor="edit-emp-name">
             Full Name
           </label>
           <input
-            id="emp-name"
+            id="edit-emp-name"
             className="add-employee__input"
-            placeholder="e.g. Priya Sharma"
             value={form.name}
             onChange={handleChange('name')}
           />
@@ -96,14 +104,13 @@ export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
         </div>
 
         <div className="add-employee__group">
-          <label className="add-employee__label" htmlFor="emp-email">
+          <label className="add-employee__label" htmlFor="edit-emp-email">
             Email
           </label>
           <input
-            id="emp-email"
+            id="edit-emp-email"
             type="email"
             className="add-employee__input"
-            placeholder="e.g. priya@company.com"
             value={form.email}
             onChange={handleChange('email')}
           />
@@ -113,14 +120,13 @@ export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
         </div>
 
         <div className="add-employee__group">
-          <label className="add-employee__label" htmlFor="emp-phone">
+          <label className="add-employee__label" htmlFor="edit-emp-phone">
             Phone
           </label>
           <input
-            id="emp-phone"
+            id="edit-emp-phone"
             type="tel"
             className="add-employee__input"
-            placeholder="e.g. +91 98765 43210"
             value={form.phone}
             onChange={handleChange('phone')}
           />
@@ -130,11 +136,11 @@ export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
         </div>
 
         <div className="add-employee__group">
-          <label className="add-employee__label" htmlFor="emp-location">
+          <label className="add-employee__label" htmlFor="edit-emp-location">
             Location / Region
           </label>
           <input
-            id="emp-location"
+            id="edit-emp-location"
             className="add-employee__input"
             placeholder="e.g. Chennai, Tamil Nadu"
             value={form.location}
@@ -143,11 +149,11 @@ export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
         </div>
 
         <div className="add-employee__group">
-          <label className="add-employee__label" htmlFor="emp-role">
+          <label className="add-employee__label" htmlFor="edit-emp-role">
             Role
           </label>
           <select
-            id="emp-role"
+            id="edit-emp-role"
             className="add-employee__select"
             value={form.role}
             onChange={handleChange('role')}

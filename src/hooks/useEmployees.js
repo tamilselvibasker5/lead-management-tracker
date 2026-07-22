@@ -47,6 +47,18 @@ export function useEmployees() {
     }
   }, []);
 
+  /* ── Update Employee ── */
+  const updateEmployee = useCallback(async (employeeId, data) => {
+    try {
+      const updated = await api.updateEmployee(employeeId, data);
+      setEmployees((prev) => prev.map((e) => (e.id === employeeId ? updated : e)));
+      return updated;
+    } catch (err) {
+      setError(err.message || 'Failed to update employee');
+      throw err;
+    }
+  }, []);
+
   /* ── Delete Employee ── */
   const deleteEmployee = useCallback(async (employeeId) => {
     try {
@@ -63,6 +75,7 @@ export function useEmployees() {
     loading,
     error,
     addEmployee,
+    updateEmployee,
     deleteEmployee,
     refreshEmployees: fetchData,
   };

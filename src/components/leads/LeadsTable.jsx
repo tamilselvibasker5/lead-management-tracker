@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import * as XLSX from 'xlsx';
 import Button from '../common/Button';
 import Spinner from '../common/Spinner';
+import { autoAssignLead } from '../../utils/assignmentRules';
 import './LeadsTable.css';
 
 /**
@@ -21,51 +22,20 @@ export default function LeadsTable({
   loading = false,
   employees = [],
   onDeleteClick,
+  onDeleteAllClick,
+  onAssignLead,
+  showAssignAction = false,
 }) {
   const fileInputRef = useRef(null);
 
-  // Default set of 3 mock rows (spread across Expiry, Warning, and Normal statuses)
-  const defaultMockData = [
-    {
-      id: 'lead_default_1',
-      source: 'Google Ads',
-      name: 'John Doe',
-      email: 'john.doe@example.com',
-      phone: '+1 (555) 019-2834',
-      location: 'New York, USA',
-      assignedTo: 'Sarah Connor',
-      notes: 'Interested in product demo.',
-      createdAt: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000).toISOString(), // 8 days ago (Expired / Red)
-      callCount: 2
-    },
-    {
-      id: 'lead_default_2',
-      source: 'Referral',
-      name: 'Jane Smith',
-      email: 'jane.smith@example.com',
-      phone: '555-014-9988',
-      location: 'London, UK',
-      assignedTo: 'John Connor',
-      notes: 'Requested pricing information.',
-      createdAt: new Date(Date.now() - 5.5 * 24 * 60 * 60 * 1000).toISOString(), // 5.5 days ago (Warning / Orange)
-      callCount: 0
-    },
-    {
-      id: 'lead_default_3',
-      source: 'Cold Outreach',
-      name: 'Robert Johnson',
-      email: 'robert.johnson@example.com',
-      phone: '+44 20 7946 0958',
-      location: 'Manchester, UK',
-      assignedTo: 'Sarah Connor',
-      notes: 'Follow up next week.',
-      createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(), // 2 days ago (Normal / Green)
-      callCount: 1
-    }
-  ];
+  // Default set of mock rows (empty by default)
+  const defaultMockData = [];
 
   // Initialize state with default mock data
   const [leads, setLeads] = useState(defaultMockData);
+
+  // Selected lead IDs for multi-selection
+  const [selectedLeadIds, setSelectedLeadIds] = useState([]);
 
   // Active sorting order state: 'oldest' | 'newest'
   const [sortOrder, setSortOrder] = useState('oldest');
@@ -81,10 +51,10 @@ export default function LeadsTable({
 
   // Synchronize state when external leads are passed in
   useEffect(() => {
-    if (propLeads && propLeads.length > 0) {
+    if (Array.isArray(propLeads)) {
       const mapped = propLeads.map((l) => ({
         id: l.id,
-        source: l.source || l.Source || '—',
+        platform: l.platform || l.Platform || l.source || l.Source || '—',
         name: l.name || l.Name || '—',
         email: l.email || l.Email || '—',
         phone: l.phone || l.Phone || '—',
@@ -92,11 +62,14 @@ export default function LeadsTable({
         assignedTo: typeof l.assignedTo === 'string' && l.assignedTo.startsWith('usr_')
           ? (employees.find((e) => e.id === l.assignedTo)?.name || l.assignedTo)
           : (l.assignedTo || l['Assigned to'] || l.AssignedTo || 'Unassigned'),
+        assignedToRaw: typeof l.assignedTo === 'string'
+          ? l.assignedTo
+          : (l['Assigned to'] || l.AssignedTo || ''),
         notes: l.notes || l.Notes || '—',
         createdAt: l.createdAt || l.CreatedAt || new Date().toISOString(),
         callCount: Number(l.callCount || l.CallCount) || 0
       }));
-      
+
       // Preserve any locally imported leads so they are not wiped out by parent renders
       setLeads((prev) => {
         const localImported = prev.filter((lead) => String(lead.id).startsWith('imported_'));
@@ -104,6 +77,15 @@ export default function LeadsTable({
       });
     }
   }, [propLeads, employees]);
+
+  const getAssigneeDisplay = (assignedTo) => {
+    if (!assignedTo) return 'Unassigned';
+    if (typeof assignedTo === 'string' && assignedTo.startsWith('usr_')) {
+      const emp = employees.find((e) => e.id === assignedTo);
+      return emp ? emp.name : assignedTo;
+    }
+    return assignedTo;
+  };
 
   /**
    * Helper function to strip non-numeric characters (dashes, spaces, '+')
@@ -127,15 +109,17 @@ export default function LeadsTable({
   const getExpiryDetails = (createdAt) => {
     if (!createdAt) return { rowClass: '', statusText: '—', daysVal: 0 };
     const createdTime = new Date(createdAt).getTime();
+    if (isNaN(createdTime)) return { rowClass: '', statusText: '—', daysVal: 0 };
+
     const elapsedDays = (Date.now() - createdTime) / (24 * 60 * 60 * 1000);
     const remainingDays = 7 - elapsedDays;
 
-    if (elapsedDays > 7) {
-      return { rowClass: 'row-expired', statusText: 'Expired', daysVal: remainingDays };
-    } else if (elapsedDays > 5) {
-      return { rowClass: 'row-warning', statusText: `${remainingDays.toFixed(1)} days`, daysVal: remainingDays };
+    if (remainingDays <= 0) {
+      return { rowClass: 'row-expired', statusText: 'Expired', daysVal: 0 };
+    } else if (remainingDays <= 2) {
+      return { rowClass: 'row-warning', statusText: `${remainingDays.toFixed(1)} days remaining`, daysVal: remainingDays };
     } else {
-      return { rowClass: 'row-normal', statusText: `${remainingDays.toFixed(1)} days`, daysVal: remainingDays };
+      return { rowClass: 'row-normal', statusText: `${remainingDays.toFixed(1)} days remaining`, daysVal: remainingDays };
     }
   };
 
@@ -146,22 +130,176 @@ export default function LeadsTable({
    * @param {number} count
    */
   const handleCallCountChange = (id, count) => {
-    setLeads((prev) =>
-      prev.map((lead) => (lead.id === id ? { ...lead, callCount: count } : lead))
+    setLeads((prev) => {
+      const updated = prev.map((lead) => (lead.id === id ? { ...lead, callCount: count } : lead));
+      try {
+        localStorage.setItem('lead_tracker_leads', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+      return updated;
+    });
+  };
+
+  /**
+   * Automatically increments the call attempts counter when the call button/link is clicked.
+   *
+   * @param {string} id
+   */
+  const handleCallClick = (id) => {
+    setLeads((prev) => {
+      const updated = prev.map((lead) => {
+        if (lead.id === id) {
+          const currentCount = Number(lead.callCount) || 0;
+          return { ...lead, callCount: currentCount + 1 };
+        }
+        return lead;
+      });
+      try {
+        localStorage.setItem('lead_tracker_leads', JSON.stringify(updated));
+      } catch (e) {
+        console.error('Error saving to localStorage:', e);
+      }
+      return updated;
+    });
+  };
+
+  /**
+   * Selection Handlers
+   */
+  const isAllSelected = sortedLeads.length > 0 && selectedLeadIds.length === sortedLeads.length;
+
+  const handleSelectAllToggle = () => {
+    if (isAllSelected) {
+      setSelectedLeadIds([]);
+    } else {
+      setSelectedLeadIds(sortedLeads.map((l) => l.id));
+    }
+  };
+
+  const handleRowSelectToggle = (id) => {
+    setSelectedLeadIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
     );
   };
 
   /**
-   * Removes a specific lead row from the local state.
-   *
-   * @param {string} id
+   * Deletes a single lead by ID.
    */
-  const handleDelete = (id) => {
-    const leadToDelete = leads.find((l) => l.id === id);
-    if (onDeleteClick && leadToDelete) {
-      onDeleteClick(leadToDelete);
+  const handleDelete = async (leadId) => {
+    const leadObj = leads.find((l) => l.id === leadId);
+    const leadName = leadObj ? leadObj.name : 'this lead';
+
+    if (window.confirm(`Are you sure you want to delete "${leadName}"?`)) {
+      try {
+        if (onDeleteClick) {
+          await onDeleteClick(leadId, leadObj);
+        }
+        setLeads((prev) => {
+          const updated = prev.filter((l) => l.id !== leadId);
+          try {
+            localStorage.setItem('lead_tracker_leads', JSON.stringify(updated));
+          } catch (e) {
+            console.error('Error saving to localStorage:', e);
+          }
+          return updated;
+        });
+        setSelectedLeadIds((prev) => prev.filter((id) => id !== leadId));
+      } catch (err) {
+        console.error('Failed to delete lead:', err);
+      }
     }
-    setLeads((prev) => prev.filter((lead) => lead.id !== id));
+  };
+
+  /**
+   * Deletes all currently selected leads.
+   */
+  const handleDeleteSelected = async () => {
+    if (selectedLeadIds.length === 0) return;
+    const count = selectedLeadIds.length;
+    if (
+      window.confirm(
+        `Are you sure you want to completely delete ${count} selected lead(s)?`
+      )
+    ) {
+      try {
+        const idsToDelete = [...selectedLeadIds];
+        for (const id of idsToDelete) {
+          if (onDeleteClick) {
+            const leadObj = leads.find((l) => l.id === id);
+            await onDeleteClick(id, leadObj);
+          }
+        }
+        setLeads((prev) => {
+          const updated = prev.filter((l) => !idsToDelete.includes(l.id));
+          try {
+            localStorage.setItem('lead_tracker_leads', JSON.stringify(updated));
+          } catch (e) {
+            console.error('Error saving to localStorage:', e);
+          }
+          return updated;
+        });
+        setSelectedLeadIds([]);
+      } catch (err) {
+        console.error('Failed to delete selected leads:', err);
+      }
+    }
+  };
+
+  /**
+   * Automatically assigns all leads in the table based on location and language matching.
+   */
+  const handleAutoAssignAll = async () => {
+    if (!leads || leads.length === 0) return;
+
+    let assignedCount = 0;
+    const updatedLeads = [...leads];
+
+    for (let i = 0; i < updatedLeads.length; i++) {
+      const lead = updatedLeads[i];
+      const matchedEmpId = autoAssignLead(lead, '', employees);
+
+      if (matchedEmpId && matchedEmpId !== 'Unassigned' && matchedEmpId !== lead.assignedTo && matchedEmpId !== lead.assignedToRaw) {
+        assignedCount++;
+        updatedLeads[i] = {
+          ...lead,
+          assignedTo: matchedEmpId,
+          assignedToRaw: matchedEmpId
+        };
+
+        if (onAssignLead) {
+          try {
+            await onAssignLead(lead.id, matchedEmpId);
+          } catch (err) {
+            console.error('Failed to assign lead via callback:', err);
+          }
+        }
+      }
+    }
+
+    setLeads(updatedLeads);
+    try {
+      localStorage.setItem('lead_tracker_leads', JSON.stringify(updatedLeads));
+    } catch (e) {
+      console.error('Error saving to localStorage:', e);
+    }
+
+    alert(`⚡ Auto-assigned ${assignedCount} lead(s) based on location & language matching!`);
+  };
+
+  /**
+   * Removes all leads from local state after calling onDeleteAllClick callback.
+   */
+  const handleDeleteAll = async () => {
+    if (onDeleteAllClick) {
+      await onDeleteAllClick();
+    }
+    setLeads([]);
+    try {
+      localStorage.setItem('lead_tracker_leads', JSON.stringify([]));
+    } catch (e) {
+      console.error('Error clearing localStorage:', e);
+    }
   };
 
   /**
@@ -186,14 +324,16 @@ export default function LeadsTable({
           const getVal = (field) => {
             const key = Object.keys(row).find((k) => {
               const normalizedKey = k.trim().toLowerCase();
-              if (field === 'source') {
-                return ['source', 'lead source', 'campaign', 'campaign_name', 'campaign name', 'ad name', 'platform', 'medium', 'source/medium', 'channel', 'lead channel', 'marketing channel', 'ad source', 'source details'].includes(normalizedKey) || 
-                  normalizedKey.includes('source') || 
-                  normalizedKey.includes('campaign') || 
-                  normalizedKey.includes('platform') || 
-                  normalizedKey.includes('medium') || 
-                  normalizedKey.includes('ad') || 
-                  normalizedKey.includes('channel');
+              if (field === 'platform') {
+                return ['platform', 'source', 'lead source', 'campaign', 'campaign_name', 'campaign name', 'ad name', 'medium', 'source/medium', 'channel', 'lead channel', 'marketing channel', 'ad source', 'source details', 'ig', 'fb', 'instagram', 'facebook'].includes(normalizedKey) ||
+                  normalizedKey.includes('platform') ||
+                  normalizedKey.includes('source') ||
+                  normalizedKey.includes('campaign') ||
+                  normalizedKey.includes('medium') ||
+                  normalizedKey.includes('ad') ||
+                  normalizedKey.includes('channel') ||
+                  normalizedKey === 'ig' ||
+                  normalizedKey === 'fb';
               }
               if (field === 'name') {
                 return ['name', 'lead name', 'full name', 'contact name', 'customer name', 'client name', 'first name', 'first_name', 'student name'].includes(normalizedKey) || normalizedKey.includes('name') || normalizedKey.includes('person') || normalizedKey.includes('client');
@@ -226,7 +366,7 @@ export default function LeadsTable({
 
           return {
             id: `imported_${Date.now()}_${index}`,
-            source: getVal('source') || '—',
+            platform: getVal('platform') || '—',
             name: getVal('name') || '—',
             email: getVal('email') || '—',
             phone: getVal('phone') || '—',
@@ -238,8 +378,16 @@ export default function LeadsTable({
           };
         });
 
-        // Add imported leads to current table state
-        setLeads((prev) => [...prev, ...mappedLeads]);
+        // Add imported leads to current table state & save to localStorage
+        setLeads((prev) => {
+          const updated = [...prev, ...mappedLeads];
+          try {
+            localStorage.setItem('lead_tracker_leads', JSON.stringify(updated));
+          } catch (e) {
+            console.error('Error saving to localStorage:', e);
+          }
+          return updated;
+        });
       } catch (err) {
         console.error('Error importing Excel file:', err);
         alert('Could not parse Excel file. Please make sure it is a valid .xlsx or .xls file.');
@@ -263,11 +411,11 @@ export default function LeadsTable({
         <span className="leads-table__filter-count" style={{ flex: 1, marginLeft: '1rem' }}>
           {leads.length} lead{leads.length !== 1 ? 's' : ''}
         </span>
-        
+
         {/* Sort & Import Control Buttons */}
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="secondary"
             onClick={() => setSortOrder((prev) => (prev === 'oldest' ? 'newest' : 'oldest'))}
             title="Toggle sort order (Oldest / Newest)"
             style={{ minWidth: '150px' }}
@@ -277,6 +425,24 @@ export default function LeadsTable({
           <Button variant="primary" onClick={triggerFileInput}>
             📥 Import Excel
           </Button>
+          {showAssignAction && leads.length > 0 && (
+            <Button
+              variant="primary"
+              onClick={handleAutoAssignAll}
+              title="Automatically assign leads to employees matching region and language"
+            >
+              ⚡ Auto Assign
+            </Button>
+          )}
+          {selectedLeadIds.length > 0 && (
+            <Button
+              variant="danger"
+              onClick={handleDeleteSelected}
+              title="Delete selected leads"
+            >
+              🗑️ Delete Selected ({selectedLeadIds.length})
+            </Button>
+          )}
         </div>
 
         <input
@@ -297,7 +463,16 @@ export default function LeadsTable({
         <table className="leads-table">
           <thead>
             <tr>
-              <th>Source</th>
+              <th style={{ width: '48px', textAlign: 'center' }}>
+                <input
+                  type="checkbox"
+                  className="leads-table__checkbox"
+                  checked={isAllSelected}
+                  onChange={handleSelectAllToggle}
+                  title="Select / Deselect All"
+                />
+              </th>
+              <th>Platform</th>
               <th>Name</th>
               <th>Email</th>
               <th>Phone</th>
@@ -314,7 +489,16 @@ export default function LeadsTable({
               const { rowClass, statusText } = getExpiryDetails(lead.createdAt);
               return (
                 <tr key={lead.id} className={rowClass}>
-                  <td className="leads-table__secondary" title={lead.source}>{lead.source || '—'}</td>
+                  <td style={{ textAlign: 'center' }}>
+                    <input
+                      type="checkbox"
+                      className="leads-table__checkbox"
+                      checked={selectedLeadIds.includes(lead.id)}
+                      onChange={() => handleRowSelectToggle(lead.id)}
+                      title={`Select ${lead.name}`}
+                    />
+                  </td>
+                  <td className="leads-table__secondary" title={lead.platform}>{lead.platform || '—'}</td>
                   <td className="leads-table__name" title={lead.name}>
                     {lead.name || '—'}
                     {rowClass === 'row-expired' && (
@@ -347,6 +531,7 @@ export default function LeadsTable({
                         href={`tel:${cleanPhoneNumber(lead.phone)}`}
                         className="leads-table__link"
                         title={`Call ${lead.name}`}
+                        onClick={() => handleCallClick(lead.id)}
                       >
                         {lead.phone}
                       </a>
@@ -355,15 +540,43 @@ export default function LeadsTable({
                     )}
                   </td>
                   <td className="leads-table__secondary" title={lead.location}>{lead.location || '—'}</td>
-                  <td title={lead.assignedTo}>
-                    <span className="leads-table__assigned">
-                      {lead.assignedTo || 'Unassigned'}
-                    </span>
+                  <td title={getAssigneeDisplay(lead.assignedToRaw)}>
+                    {showAssignAction ? (
+                      <select
+                        value={
+                          employees.find(
+                            (e) =>
+                              e.id === lead.assignedToRaw ||
+                              e.name === lead.assignedToRaw ||
+                              (lead.assignedTo && e.name === lead.assignedTo)
+                          )?.id || ''
+                        }
+                        onChange={async (e) => {
+                          const val = e.target.value;
+                          if (onAssignLead) {
+                            await onAssignLead(lead.id, val || null);
+                          }
+                        }}
+                        className="leads-table__assign-select"
+                        title={`Assign ${lead.name} to employee`}
+                      >
+                        <option value="">Unassigned</option>
+                        {employees.map((emp) => (
+                          <option key={emp.id} value={emp.id}>
+                            {emp.name}
+                          </option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span className="leads-table__assigned">
+                        {getAssigneeDisplay(lead.assignedToRaw)}
+                      </span>
+                    )}
                   </td>
-                  <td 
-                    className="leads-table__secondary" 
-                    style={{ 
-                      whiteSpace: 'nowrap', 
+                  <td
+                    className="leads-table__secondary"
+                    style={{
+                      whiteSpace: 'nowrap',
                       fontWeight: '600',
                       color: rowClass === 'row-expired' ? 'var(--color-danger)' : rowClass === 'row-warning' ? 'var(--color-warning)' : 'inherit'
                     }}
@@ -395,7 +608,8 @@ export default function LeadsTable({
                           <a
                             href={`tel:${cleanPhoneNumber(lead.phone)}`}
                             className="btn leads-table__call-btn leads-table__icon-btn"
-                            title="Call Lead"
+                            title="Call Lead (Increments Call Attempts)"
+                            onClick={() => handleCallClick(lead.id)}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
                           </a>
@@ -414,6 +628,14 @@ export default function LeadsTable({
                           No contact
                         </span>
                       )}
+                      <Button
+                        variant="secondary"
+                        className="leads-table__icon-btn"
+                        onClick={() => onEditClick && onEditClick(lead)}
+                        title="Edit Lead Details"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                      </Button>
                       <Button
                         variant="danger"
                         className="leads-table__icon-btn leads-table__delete-btn"

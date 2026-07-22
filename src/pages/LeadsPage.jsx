@@ -27,13 +27,12 @@ export default function LeadsPage() {
     setDetailsModalOpen(true);
   };
 
-  const handleDeleteClick = async (lead) => {
-    if (window.confirm(`Are you sure you want to delete ${lead.name}?`)) {
-      try {
-        await deleteLead(lead.id);
-      } catch (err) {
-        console.error(err);
-      }
+  const handleDeleteClick = async (leadOrId) => {
+    const id = typeof leadOrId === 'object' && leadOrId !== null ? leadOrId.id : leadOrId;
+    try {
+      await deleteLead(id);
+    } catch (err) {
+      console.error('Error deleting lead:', err);
     }
   };
 
@@ -79,7 +78,7 @@ export default function LeadsPage() {
         onStatusChange={updateStatus}
         onEditClick={handleViewClick}
         onDeleteClick={handleDeleteClick}
-        onDeleteAllClick={isAdminOrAbove ? handleDeleteAllClick : undefined}
+        onDeleteAllClick={handleDeleteAllClick}
       />
 
       <LeadDetailsModal
@@ -92,7 +91,7 @@ export default function LeadsPage() {
         onSave={updateLeadDetails}
         onAddActivity={addLeadActivity}
       />
-      
+
       <AddLeadModal
         isOpen={addModalOpen}
         onClose={() => setAddModalOpen(false)}

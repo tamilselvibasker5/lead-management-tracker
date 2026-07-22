@@ -6,6 +6,7 @@ import Spinner from '../common/Spinner';
 import * as api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
 import './LeadUploader.css';
+import { autoAssignLead } from '../../utils/assignmentRules';
 
 /* ═══════════════════════════════════════════════════════════════════
    HEADER MAPPING
@@ -13,19 +14,23 @@ import './LeadUploader.css';
    Maps common Excel column headers to the database field names.
    Add more entries here as needed for your use case.
    ═══════════════════════════════════════════════════════════════════ */
-const DEFAULT_COLUMNS = ['Source', 'Name', 'Email', 'Phone', 'Location', 'Assigned to', 'Notes'];
+const DEFAULT_COLUMNS = ['Platform', 'Name', 'Email', 'Phone', 'Location', 'Assigned to', 'Notes'];
 
 const HEADER_MAP = {
   // Excel header (lowercased & trimmed) → Default column name
-  'source': 'Source',
-  'lead source': 'Source',
-  'campaign': 'Source',
-  'campaign_name': 'Source',
-  'campaign name': 'Source',
-  'ad name': 'Source',
-  'platform': 'Source',
-  'medium': 'Source',
-  'source/medium': 'Source',
+  'platform': 'Platform',
+  'source': 'Platform',
+  'lead source': 'Platform',
+  'campaign': 'Platform',
+  'campaign_name': 'Platform',
+  'campaign name': 'Platform',
+  'ad name': 'Platform',
+  'medium': 'Platform',
+  'source/medium': 'Platform',
+  'ig': 'Platform',
+  'fb': 'Platform',
+  'instagram': 'Platform',
+  'facebook': 'Platform',
 
   'name': 'Name',
   'lead name': 'Name',
@@ -93,7 +98,7 @@ function mapHeader(raw) {
   if (key.includes('email') || key.includes('mail')) return 'Email';
   if (key.includes('phone') || key.includes('ph') || key.includes('mobile') || key.includes('contact') || key.includes('whatsapp') || key.includes('number') || key.includes('cell')) return 'Phone';
   if (key.includes('city') || key.includes('location') || key.includes('region') || key.includes('address') || key.includes('state')) return 'Location';
-  if (key.includes('source') || key.includes('campaign') || key.includes('platform') || key.includes('medium') || key.includes('ad') || key.includes('channel')) return 'Source';
+  if (key.includes('source') || key.includes('campaign') || key.includes('platform') || key.includes('medium') || key.includes('ad') || key.includes('channel') || key === 'ig' || key === 'fb' || key.includes('instagram') || key.includes('facebook')) return 'Platform';
   if (key.includes('name') || key.includes('candidate') || key.includes('student') || key.includes('client') || key.includes('customer') || key.includes('person')) return 'Name';
   if (key.includes('note') || key.includes('remark') || key.includes('comment') || key.includes('desc') || key.includes('detail') || key.includes('feedback')) return 'Notes';
   if (key.includes('assign') || key.includes('owner') || key.includes('agent') || key.includes('rep') || key.includes('caller') || key.includes('executive') || key.includes('employee') || key.includes('staff') || key.includes('counselor') || key.includes('user') || key.includes('handled')) return 'Assigned to';
@@ -139,6 +144,11 @@ function parseWorkbook(workbook) {
         cleaned[mappedKey] = typeof value === 'string' ? value.trim() : value;
       }
     }
+
+    // 3. Smart Auto-Assignment via autoAssignLead(location, language)
+    const locationVal = cleaned['Location'] || row['Location'] || row['location'] || row['State'] || row['City'] || row['Address'] || '';
+    const languageVal = cleaned['Language'] || row['Language'] || row['language'] || '';
+    cleaned['Assigned to'] = autoAssignLead(locationVal, languageVal);
 
     return cleaned;
   });
@@ -548,7 +558,7 @@ export default function LeadUploader({ onImportComplete }) {
               type="text"
               value={newColName}
               onChange={(e) => setNewColName(e.target.value)}
-              placeholder="e.g. source"
+              placeholder="e.g. platform"
               style={{
                 width: '100%',
                 padding: '0.6rem 0.75rem',
