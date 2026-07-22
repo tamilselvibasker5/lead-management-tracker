@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
-import { Bell, UploadCloud, UserPlus, ArrowRightLeft, Check, Trash2, Info } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { Bell, UploadCloud, UserPlus, ArrowRightLeft, Info } from 'lucide-react';
 import './NotificationCenter.css';
 
 function formatRelativeTime(dateString) {
@@ -20,6 +21,7 @@ function formatRelativeTime(dateString) {
 }
 
 export default function NotificationCenter() {
+  const { user } = useAuth();
   const { notifications, unreadCount, markRead, markAllRead, clearAll } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);

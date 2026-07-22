@@ -16,9 +16,9 @@ export function NotificationProvider({ children }) {
     }
     try {
       const data = await api.fetchNotifications(user.id, role);
-      setNotifications(data || []);
-    } catch (err) {
-      console.error('Failed to load notifications:', err);
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch (_err) {
+      setNotifications([]);
     }
   }, [user, role]);
 

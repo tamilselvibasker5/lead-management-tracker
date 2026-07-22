@@ -132,13 +132,20 @@ export async function addLeadActivity(leadId, activity) {
 /* ──────────────────────────── NOTIFICATIONS ──────────────────────────── */
 
 export async function fetchNotifications(userId, role) {
-  const params = new URLSearchParams();
-  if (userId) params.append('userId', userId);
-  if (role) params.append('role', role);
+  try {
+    const params = new URLSearchParams();
+    if (userId) params.append('userId', userId);
+    if (role) params.append('role', role);
 
-  const query = params.toString() ? `?${params.toString()}` : '';
-  const res = await fetch(`${API_BASE}/notifications${query}`);
-  return await handleResponse(res);
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/notifications${query}`);
+    if (res.status === 404) {
+      return [];
+    }
+    return await handleResponse(res);
+  } catch (_err) {
+    return [];
+  }
 }
 
 export async function markNotificationAsRead(id, userId) {
