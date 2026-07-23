@@ -18,7 +18,7 @@ import './LeadsTable.css';
  *   onDeleteClick?: (lead: object) => void,
  * }} props
  */
-import { Inbox, Check, X, Pencil, UploadCloud, Search, Trash2, ArrowUpDown, Filter, Notebook, ArrowRightLeft } from 'lucide-react';
+import { Inbox, Check, X, Pencil, UploadCloud, DownloadCloud, Search, Trash2, ArrowUpDown, Filter, Notebook, ArrowRightLeft } from 'lucide-react';
 import NotepadModal from './NotepadModal';
 import SwapLeadModal from './SwapLeadModal';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,6 +35,7 @@ export default function LeadsTable({
   onSwapLead,
   onUpdateLeadDetails,
   onAddActivity,
+  onStatusChange,
   showAssignAction = false,
   hideImportExcel = false,
 }) {
@@ -116,6 +117,42 @@ export default function LeadsTable({
         console.error('Failed to update notes:', err);
       }
     }
+  };
+
+  const handleStatusChangeLocal = async (leadId, newStatus) => {
+    setLeads((prev) =>
+      prev.map((l) => (l.id === leadId ? { ...l, status: newStatus } : l))
+    );
+    if (onStatusChange) {
+      try {
+        await onStatusChange(leadId, newStatus);
+      } catch (err) {
+        console.error('Failed to update status:', err);
+      }
+    }
+  };
+
+  const handleExportExcel = () => {
+    const dataToExport = (selectedLeadIds.length > 0
+      ? filteredLeads.filter((l) => selectedLeadIds.includes(l.id))
+      : filteredLeads
+    ).map((l) => ({
+      Platform: l.platform || '—',
+      Name: l.name || '—',
+      Email: l.email || '—',
+      Phone: l.phone || '—',
+      Location: l.location || '—',
+      Status: l.status || 'New',
+      'Assigned To': getAssigneeDisplay(l.assignedToRaw),
+      'Call Attempts': l.callCount || 0,
+      Notes: l.notes || '—',
+      'Created At': l.createdAt ? new Date(l.createdAt).toLocaleDateString() : '—',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
+    XLSX.writeFile(workbook, `Leads_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   // Dropdown filter states
@@ -275,6 +312,11 @@ export default function LeadsTable({
       }
       return updated;
     });
+    if (onUpdateLeadDetails) {
+      onUpdateLeadDetails(id, { callCount: count }).catch((err) =>
+        console.error('Failed to sync callCount:', err)
+      );
+    }
   };
 
   /**
@@ -283,11 +325,13 @@ export default function LeadsTable({
    * @param {string} id
    */
   const handleCallClick = (id) => {
+    let newCount = 1;
     setLeads((prev) => {
       const updated = prev.map((lead) => {
         if (lead.id === id) {
           const currentCount = Number(lead.callCount) || 0;
-          return { ...lead, callCount: currentCount + 1 };
+          newCount = currentCount + 1;
+          return { ...lead, callCount: newCount };
         }
         return lead;
       });
@@ -298,6 +342,59 @@ export default function LeadsTable({
       }
       return updated;
     });
+    if (onUpdateLeadDetails) {
+      onUpdateLeadDetails(id, { callCount: newCount }).catch((err) =>
+        console.error('Failed to sync callCount:', err)
+      );
+    }
+  };
+
+  const handleBulkAssign = async (e) => {
+    const empId = e.target.value;
+    if (!empId || selectedLeadIds.length === 0) return;
+    const selectedEmp = employees.find((emp) => emp.id === empId);
+    const empName = selectedEmp ? selectedEmp.name : 'Unassigned';
+
+    try {
+      for (const id of selectedLeadIds) {
+        if (onAssignLead) {
+          await onAssignLead(id, empId);
+        }
+      }
+      setLeads((prev) =>
+        prev.map((l) =>
+          selectedLeadIds.includes(l.id)
+            ? { ...l, assignedTo: empName, assignedToRaw: empId }
+            : l
+        )
+      );
+      setSelectedLeadIds([]);
+      e.target.value = '';
+    } catch (err) {
+      console.error('Failed to bulk assign leads:', err);
+    }
+  };
+
+  const handleBulkStatusChange = async (e) => {
+    const newStatus = e.target.value;
+    if (!newStatus || selectedLeadIds.length === 0) return;
+
+    try {
+      for (const id of selectedLeadIds) {
+        if (onStatusChange) {
+          await onStatusChange(id, newStatus);
+        }
+      }
+      setLeads((prev) =>
+        prev.map((l) =>
+          selectedLeadIds.includes(l.id) ? { ...l, status: newStatus } : l
+        )
+      );
+      setSelectedLeadIds([]);
+      e.target.value = '';
+    } catch (err) {
+      console.error('Failed to bulk change status:', err);
+    }
   };
 
   /**
@@ -642,6 +739,15 @@ export default function LeadsTable({
             {sortOrder === 'oldest' ? 'Oldest First' : 'Newest First'}
           </Button>
 
+          <Button
+            variant="secondary"
+            onClick={handleExportExcel}
+            title="Export leads to Excel spreadsheet"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <DownloadCloud size={16} /> Export Excel
+          </Button>
+
           {!hideImportExcel && (
             <Button variant="primary" onClick={triggerFileInput} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
               <UploadCloud size={16} /> Import Excel
@@ -649,14 +755,52 @@ export default function LeadsTable({
           )}
 
           {selectedLeadIds.length > 0 && (
-            <Button
-              variant="danger"
-              onClick={handleDeleteSelected}
-              title="Delete selected leads"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-            >
-              <Trash2 size={16} /> Delete Selected ({selectedLeadIds.length})
-            </Button>
+            <>
+              {employees.length > 0 && (
+                <select
+                  className="leads-table__call-select"
+                  onChange={handleBulkAssign}
+                  defaultValue=""
+                  title="Assign selected leads to employee"
+                  style={{ background: 'var(--color-primary-light)', color: 'var(--color-primary)', fontWeight: 700 }}
+                >
+                  <option value="" disabled>
+                    Bulk Assign ({selectedLeadIds.length})...
+                  </option>
+                  {employees.map((emp) => (
+                    <option key={emp.id} value={emp.id}>
+                      Assign to {emp.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+
+              <select
+                className="leads-table__call-select"
+                onChange={handleBulkStatusChange}
+                defaultValue=""
+                title="Change status for selected leads"
+                style={{ background: 'var(--color-surface-elevated)', fontWeight: 600 }}
+              >
+                <option value="" disabled>
+                  Bulk Status ({selectedLeadIds.length})...
+                </option>
+                <option value="New">Move to New</option>
+                <option value="Contacted">Move to Contacted</option>
+                <option value="Qualified">Move to Qualified</option>
+                <option value="Won">Move to Won</option>
+                <option value="Lost">Move to Lost</option>
+              </select>
+
+              <Button
+                variant="danger"
+                onClick={handleDeleteSelected}
+                title="Delete selected leads"
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <Trash2 size={16} /> Delete Selected ({selectedLeadIds.length})
+              </Button>
+            </>
           )}
         </div>
 
@@ -693,6 +837,7 @@ export default function LeadsTable({
               <th>Phone</th>
               <th>Location</th>
               <th>Assigned to</th>
+              <th>Status</th>
               <th>Days Remaining</th>
               <th>Call Attempts</th>
               <th>Notes</th>
@@ -796,6 +941,33 @@ export default function LeadsTable({
                         {getAssigneeDisplay(lead.assignedToRaw)}
                       </span>
                     )}
+                  </td>
+                  <td>
+                    <select
+                      value={lead.status || 'New'}
+                      onChange={(e) => handleStatusChangeLocal(lead.id, e.target.value)}
+                      className="leads-table__call-select"
+                      style={{
+                        fontWeight: '600',
+                        color:
+                          lead.status === 'Won'
+                            ? 'var(--color-success)'
+                            : lead.status === 'Lost'
+                            ? 'var(--color-danger)'
+                            : lead.status === 'Qualified'
+                            ? '#8b5cf6'
+                            : lead.status === 'Contacted'
+                            ? 'var(--color-info)'
+                            : 'var(--color-primary)',
+                      }}
+                      title={`Change status for ${lead.name}`}
+                    >
+                      <option value="New">New</option>
+                      <option value="Contacted">Contacted</option>
+                      <option value="Qualified">Qualified</option>
+                      <option value="Won">Won</option>
+                      <option value="Lost">Lost</option>
+                    </select>
                   </td>
                   <td
                     className="leads-table__secondary"

@@ -2,21 +2,31 @@ import { useState, useEffect } from 'react';
 import Modal from '../common/Modal';
 import Button from '../common/Button';
 import NotepadModal from './NotepadModal';
-import { Phone, Mail, Users, FileText, Plus, Notebook } from 'lucide-react';
+import { Phone, Mail, Users, FileText, Plus, MapPin, Tag, UserCheck, MessageSquare } from 'lucide-react';
 import './Notepad.css';
 
-export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddActivity }) {
+export default function LeadDetailsModal({
+  isOpen,
+  onClose,
+  lead,
+  employees = [],
+  onSave,
+  onAddActivity,
+}) {
   const [activeTab, setActiveTab] = useState('info'); // 'info' | 'activity'
-  
-  // Info Tab State
+
+  // Form State
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     location: '',
     platform: '',
+    status: 'New',
+    assignedTo: '',
     notes: '',
   });
+
   const [savingInfo, setSavingInfo] = useState(false);
   const [infoError, setInfoError] = useState('');
   const [showNotepadModal, setShowNotepadModal] = useState(false);
@@ -34,25 +44,38 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
         email: lead.email || '',
         phone: lead.phone || '',
         location: lead.location || '',
-        platform: lead.platform || lead.source || '',
+        platform: lead.platform || lead.source || 'ig',
+        status: lead.status || 'New',
+        assignedTo: lead.assignedToRaw || lead.assignedTo || '',
         notes: lead.notes || '',
       });
       setActiveTab('info');
     }
   }, [lead]);
 
-  const handleInfoChange = (e) => {
+  const cleanPhone = (phone) => (phone ? phone.replace(/[^0-9]/g, '') : '');
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleInfoSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!lead) return;
     try {
       setSavingInfo(true);
       setInfoError('');
-      await onSave(lead.id, formData);
+
+      // Find employee name if assignedTo is an ID
+      const emp = employees.find((e) => e.id === formData.assignedTo || e.name === formData.assignedTo);
+      const updates = {
+        ...formData,
+        assignedTo: emp ? emp.name : (formData.assignedTo || 'Unassigned'),
+        assignedToRaw: emp ? emp.id : (formData.assignedTo || null),
+      };
+
+      await onSave(lead.id, updates);
       onClose();
     } catch (err) {
       setInfoError(err.message || 'Failed to update lead');
@@ -69,7 +92,7 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
       setActivityError('');
       await onAddActivity(lead.id, {
         type: activityType,
-        text: activityText
+        text: activityText,
       });
       setActivityText('');
     } catch (err) {
@@ -88,42 +111,79 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
   const totalContacts = calls + emails + meetings;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Lead Details: ${lead.name}`}>
-      {/* Contact Statistics Banner */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.05) 100%)',
-        border: '1px solid rgba(99, 102, 241, 0.3)',
-        borderRadius: 'var(--radius-md)',
-        padding: '0.85rem 1.25rem',
-        marginBottom: '1.25rem',
-        boxShadow: 'var(--shadow-sm)',
-      }}>
+    <Modal isOpen={isOpen} onClose={onClose} title={`Quick Edit & Action: ${lead.name || 'Lead Details'}`}>
+      {/* Header Banner with Platform & Quick Actions */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.06) 100%)',
+          border: '1px solid rgba(99, 102, 241, 0.25)',
+          borderRadius: 'var(--radius-md)',
+          padding: '0.85rem 1.15rem',
+          marginBottom: '1.25rem',
+          gap: '1rem',
+          flexWrap: 'wrap',
+        }}
+      >
         <div>
-          <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-primary)', fontWeight: 700, display: 'block', marginBottom: '0.15rem' }}>
-            Engagement Summary
+          <span style={{ fontSize: '0.725rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-primary)', fontWeight: 700 }}>
+            Source Platform: <strong style={{ color: 'var(--color-text)' }}>{formData.platform || 'ig'}</strong>
           </span>
-          <span style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-text)' }}>
-            Times Contacted: <span style={{ color: 'var(--color-primary)' }}>{totalContacts}</span>
-          </span>
+          <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--color-text)', marginTop: '0.15rem' }}>
+            {formData.name || 'Unnamed Lead'}
+          </div>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>
-            <Phone size={13} color="var(--color-primary)" /> <strong>{calls}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Calls</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>
-            <Mail size={13} color="var(--color-primary)" /> <strong>{emails}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Emails</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', background: 'var(--color-surface)', border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)', padding: '0.3rem 0.5rem', fontSize: '0.75rem' }}>
-            <Users size={13} color="var(--color-primary)" /> <strong>{meetings}</strong> <span style={{ color: 'var(--color-text-muted)' }}>Meetings</span>
-          </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          {formData.phone && formData.phone !== '—' && (
+            <>
+              <a
+                href={`tel:${cleanPhone(formData.phone)}`}
+                style={{
+                  padding: '0.35rem 0.65rem',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'rgba(16, 185, 129, 0.15)',
+                  color: '#10b981',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  textDecoration: 'none',
+                }}
+                title="Call Lead"
+              >
+                <Phone size={14} /> Call
+              </a>
+              <a
+                href={`https://wa.me/${cleanPhone(formData.phone)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  padding: '0.35rem 0.65rem',
+                  borderRadius: 'var(--radius-sm)',
+                  background: 'rgba(37, 211, 102, 0.15)',
+                  color: '#25D366',
+                  fontSize: '0.8rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  textDecoration: 'none',
+                }}
+                title="WhatsApp Chat"
+              >
+                <MessageSquare size={14} /> WhatsApp
+              </a>
+            </>
+          )}
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--color-border)', marginBottom: '1.5rem' }}>
+      <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--color-border)', marginBottom: '1.25rem' }}>
         <button
           onClick={() => setActiveTab('info')}
           style={{
@@ -132,11 +192,11 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
             border: 'none',
             borderBottom: activeTab === 'info' ? '2px solid var(--color-primary)' : '2px solid transparent',
             color: activeTab === 'info' ? 'var(--color-primary)' : 'var(--color-text-muted)',
-            fontWeight: 600,
-            cursor: 'pointer'
+            fontWeight: 700,
+            cursor: 'pointer',
           }}
         >
-          Info
+          Quick Action & Edit
         </button>
         <button
           onClick={() => setActiveTab('activity')}
@@ -146,70 +206,151 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
             border: 'none',
             borderBottom: activeTab === 'activity' ? '2px solid var(--color-primary)' : '2px solid transparent',
             color: activeTab === 'activity' ? 'var(--color-primary)' : 'var(--color-text-muted)',
-            fontWeight: 600,
-            cursor: 'pointer'
+            fontWeight: 700,
+            cursor: 'pointer',
           }}
         >
-          Activity Timeline
+          Activity Timeline ({activities.length})
         </button>
       </div>
 
       {activeTab === 'info' && (
-        <form onSubmit={handleInfoSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {infoError && <div style={{ color: 'var(--color-error)', fontSize: '0.875rem' }}>{infoError}</div>}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+          {infoError && <div style={{ color: 'var(--color-danger)', fontSize: '0.875rem' }}>{infoError}</div>}
+
+          {/* Status Selection Row */}
           <div>
-            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>Name</label>
-            <input
-              name="name"
-              value={formData.name}
-              onChange={handleInfoChange}
-              style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
-            />
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
+              Lead Stage Status
+            </label>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.85rem',
+                borderRadius: 'var(--radius-md)',
+                border: '1px solid var(--color-border)',
+                background: 'var(--color-surface)',
+                color:
+                  formData.status === 'Won'
+                    ? 'var(--color-success)'
+                    : formData.status === 'Lost'
+                    ? 'var(--color-danger)'
+                    : formData.status === 'Qualified'
+                    ? '#8b5cf6'
+                    : 'var(--color-primary)',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+              }}
+            >
+              <option value="New">Move to New</option>
+              <option value="Contacted">Move to Contacted</option>
+              <option value="Qualified">Move to Qualified</option>
+              <option value="Won">Move to Won</option>
+              <option value="Lost">Move to Lost</option>
+            </select>
           </div>
+
+          {/* Name & Platform */}
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>Email</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
+                Lead Name
+              </label>
+              <input
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="e.g. Narendra Gohel"
+                style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+              />
+            </div>
+
+            <div style={{ width: '140px' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
+                Platform
+              </label>
+              <input
+                name="platform"
+                value={formData.platform}
+                onChange={handleChange}
+                placeholder="e.g. ig, fb"
+                style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+              />
+            </div>
+          </div>
+
+          {/* Phone & Email */}
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
+                Phone Number
+              </label>
+              <input
+                name="phone"
+                value={formData.phone}
+                onChange={handleChange}
+                placeholder="e.g. +917359236056"
+                style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
+              />
+            </div>
+
+            <div style={{ flex: 1 }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
+                Email Address
+              </label>
               <input
                 name="email"
                 type="email"
                 value={formData.email}
-                onChange={handleInfoChange}
-                style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>Phone</label>
-              <input
-                name="phone"
-                value={formData.phone}
-                onChange={handleInfoChange}
+                onChange={handleChange}
+                placeholder="e.g. narendra@example.com"
                 style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
               />
             </div>
           </div>
+
+          {/* Location & Assigned To */}
           <div style={{ display: 'flex', gap: '1rem' }}>
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>Location</label>
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
+                Location / State
+              </label>
               <input
                 name="location"
                 value={formData.location}
-                onChange={handleInfoChange}
+                onChange={handleChange}
+                placeholder="e.g. 📍 Gujarat"
                 style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
               />
             </div>
+
             <div style={{ flex: 1 }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)', marginBottom: '0.35rem' }}>Platform</label>
-              <input
-                name="platform"
-                value={formData.platform}
-                onChange={handleInfoChange}
+              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)', marginBottom: '0.35rem' }}>
+                Assigned Employee
+              </label>
+              <select
+                name="assignedTo"
+                value={formData.assignedTo}
+                onChange={handleChange}
                 style={{ width: '100%', padding: '0.6rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--color-border)', background: 'var(--color-surface)', color: 'var(--color-text)' }}
-              />
+              >
+                <option value="">Unassigned</option>
+                {employees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name} ({emp.location || 'All Regions'})
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
+
+          {/* Notes */}
           <div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-              <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--color-text)' }}>Lead Notes</label>
+              <label style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--color-text)' }}>Lead Notes & History</label>
               <button
                 type="button"
                 onClick={() => setShowNotepadModal(true)}
@@ -225,15 +366,15 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
                   gap: '0.3rem',
                 }}
               >
-                <FileText size={14} /> Open Notes Popup Modal
+                <FileText size={14} /> Full Notepad Modal
               </button>
             </div>
             <textarea
               name="notes"
               value={formData.notes}
-              onChange={handleInfoChange}
-              rows={5}
-              placeholder="Type comprehensive lead notes..."
+              onChange={handleChange}
+              rows={4}
+              placeholder="Enter notes or discussion remarks..."
               style={{
                 width: '100%',
                 padding: '0.75rem 0.85rem',
@@ -247,12 +388,13 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
               }}
             />
           </div>
+
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
             <Button variant="ghost" type="button" onClick={onClose}>
               Cancel
             </Button>
             <Button variant="primary" type="submit" loading={savingInfo}>
-              Save Changes
+              Save Lead Changes
             </Button>
           </div>
         </form>
@@ -260,7 +402,6 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
 
       {activeTab === 'activity' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          {/* Add Activity Form */}
           <form onSubmit={handleActivitySubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', background: 'var(--color-surface-elevated)', padding: '1rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
@@ -277,13 +418,13 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
                 <option value="meeting">👥 Meeting / Demo</option>
               </select>
             </div>
-            {activityError && <div style={{ color: 'var(--color-error)', fontSize: '0.875rem' }}>{activityError}</div>}
+            {activityError && <div style={{ color: 'var(--color-danger)', fontSize: '0.875rem' }}>{activityError}</div>}
 
             <textarea
-              placeholder="Describe activity, phone discussion summary, meeting observation..."
+              placeholder="Describe discussion or client updates..."
               value={activityText}
               onChange={(e) => setActivityText(e.target.value)}
-              rows={5}
+              rows={4}
               style={{
                 width: '100%',
                 padding: '0.75rem 0.85rem',
@@ -304,18 +445,17 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
             </div>
           </form>
 
-          {/* Activity Timeline */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', maxHeight: '280px', overflowY: 'auto' }}>
             {(!lead.activities || lead.activities.length === 0) ? (
               <p style={{ color: 'var(--color-text-dimmed)', textAlign: 'center', fontSize: '0.9rem' }}>No activities logged yet.</p>
             ) : (
               lead.activities.map((act) => (
-                <div key={act.id} style={{ padding: '1rem', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <span style={{ fontWeight: 600, fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--color-primary)' }}>{act.type}</span>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--color-text-dimmed)' }}>{new Date(act.date || act.timestamp).toLocaleString()}</span>
+                <div key={act.id} style={{ padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', background: 'var(--color-surface)', border: '1px solid var(--color-border)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                    <span style={{ fontWeight: 700, fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-primary)' }}>{act.type}</span>
+                    <span style={{ fontSize: '0.775rem', color: 'var(--color-text-dimmed)' }}>{new Date(act.date || act.timestamp).toLocaleString()}</span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--color-text)', whiteSpace: 'pre-wrap' }}>{act.note || act.text}</p>
+                  <p style={{ margin: 0, fontSize: '0.875rem', color: 'var(--color-text)', whiteSpace: 'pre-wrap' }}>{act.note || act.text}</p>
                 </div>
               ))
             )}
@@ -323,7 +463,6 @@ export default function LeadDetailsModal({ isOpen, onClose, lead, onSave, onAddA
         </div>
       )}
 
-      {/* Popup Notes & Activity Modal */}
       <NotepadModal
         isOpen={showNotepadModal}
         onClose={() => setShowNotepadModal(false)}

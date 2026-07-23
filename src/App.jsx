@@ -1,16 +1,19 @@
 import { AuthProvider } from './contexts/AuthContext';
 import { NotificationProvider } from './contexts/NotificationContext';
+import { ToastProvider } from './contexts/ToastContext';
 import AppRouter from './routes/AppRouter';
 import './App.css';
 
 /**
- * Root component — wraps the entire app with AuthProvider, NotificationProvider and the router.
+ * Root component — wraps the entire app with AuthProvider, NotificationProvider, ToastProvider and the router.
  */
 export default function App() {
   return (
     <AuthProvider>
       <NotificationProvider>
-        <AppRouter />
+        <ToastProvider>
+          <AppRouter />
+        </ToastProvider>
       </NotificationProvider>
     </AuthProvider>
   );
