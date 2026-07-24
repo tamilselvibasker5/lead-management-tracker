@@ -92,7 +92,8 @@ export default function LeadDetailsModal({
       setActivityError('');
       await onAddActivity(lead.id, {
         type: activityType,
-        text: activityText,
+        note: activityText.trim(),
+        text: activityText.trim(),
       });
       setActivityText('');
     } catch (err) {

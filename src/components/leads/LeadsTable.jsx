@@ -18,7 +18,7 @@ import './LeadsTable.css';
  *   onDeleteClick?: (lead: object) => void,
  * }} props
  */
-import { Inbox, Check, X, Pencil, UploadCloud, DownloadCloud, Search, Trash2, ArrowUpDown, Filter, Notebook, ArrowRightLeft, Share2 } from 'lucide-react';
+import { Inbox, Check, X, Pencil, UploadCloud, DownloadCloud, Search, Trash2, ArrowUpDown, Filter, Notebook, ArrowRightLeft, Share2, Phone, Mail, MessageSquare } from 'lucide-react';
 import NotepadModal from './NotepadModal';
 import SwapLeadModal from './SwapLeadModal';
 import ShareProductToLeadModal from './ShareProductToLeadModal';
@@ -283,7 +283,10 @@ export default function LeadsTable({
    * @param {string} createdAt
    * @returns {{ rowClass: string, statusText: string, daysVal: number }}
    */
-  const getExpiryDetails = (createdAt) => {
+  const getExpiryDetails = (createdAt, status) => {
+    if (status === 'Trash') {
+      return { rowClass: 'row-expired', statusText: 'In Trash', daysVal: 0 };
+    }
     if (!createdAt) return { rowClass: '', statusText: '—', daysVal: 0 };
     const createdTime = new Date(createdAt).getTime();
     if (isNaN(createdTime)) return { rowClass: '', statusText: '—', daysVal: 0 };
@@ -292,7 +295,7 @@ export default function LeadsTable({
     const remainingDays = 7 - elapsedDays;
 
     if (remainingDays <= 0) {
-      return { rowClass: 'row-expired', statusText: 'Expired', daysVal: 0 };
+      return { rowClass: 'row-expired', statusText: 'Moved to Trash', daysVal: 0 };
     } else if (remainingDays <= 2) {
       return { rowClass: 'row-warning', statusText: `${remainingDays.toFixed(1)} days remaining`, daysVal: remainingDays };
     } else {
@@ -324,21 +327,27 @@ export default function LeadsTable({
   };
 
   /**
-   * Automatically increments the call attempts counter when the call button/link is clicked.
+   * Helper to handle contact action (Call, Mail, WhatsApp),
+   * increment the attempt count automatically, and add a lead activity log.
    *
-   * @param {string} id
+   * @param {object|string} leadOrId
+   * @param {'call'|'mail'|'whatsapp'} actionType
    */
-  const handleCallClick = (id) => {
-    let newCount = 1;
+  const handleActionAttempt = (leadOrId, actionType) => {
+    const targetLead =
+      typeof leadOrId === 'object' && leadOrId !== null
+        ? leadOrId
+        : leads.find((l) => l.id === leadOrId);
+
+    if (!targetLead) return;
+
+    const leadId = targetLead.id;
+    const currentCount = Number(targetLead.callCount) || 0;
+    const newCount = currentCount + 1;
+
+    // 1. Update attempt count in local state & localStorage
     setLeads((prev) => {
-      const updated = prev.map((lead) => {
-        if (lead.id === id) {
-          const currentCount = Number(lead.callCount) || 0;
-          newCount = currentCount + 1;
-          return { ...lead, callCount: newCount };
-        }
-        return lead;
-      });
+      const updated = prev.map((l) => (l.id === leadId ? { ...l, callCount: newCount } : l));
       try {
         localStorage.setItem('lead_tracker_leads', JSON.stringify(updated));
       } catch (e) {
@@ -346,12 +355,42 @@ export default function LeadsTable({
       }
       return updated;
     });
+
+    // 2. Sync updated attempt count to backend
     if (onUpdateLeadDetails) {
-      onUpdateLeadDetails(id, { callCount: newCount }).catch((err) =>
-        console.error('Failed to sync callCount:', err)
+      onUpdateLeadDetails(leadId, { callCount: newCount }).catch((err) =>
+        console.error('Failed to sync attempt count:', err)
       );
     }
+
+    // 3. Log activity in lead history timeline
+    if (onAddActivity) {
+      let type = 'note';
+      let note = '';
+
+      if (actionType === 'call') {
+        type = 'call';
+        note = `Phone call attempt #${newCount} made to lead (${targetLead.phone || 'No phone'}).`;
+      } else if (actionType === 'mail') {
+        type = 'email';
+        note = `Email contact attempt #${newCount} sent to lead (${targetLead.email || 'No email'}).`;
+      } else if (actionType === 'whatsapp') {
+        type = 'note';
+        note = `WhatsApp message attempt #${newCount} initiated with lead (${targetLead.phone || 'No phone'}).`;
+      }
+
+      onAddActivity(leadId, {
+        type,
+        note,
+        text: note,
+        authorName: user?.name || 'System',
+      }).catch((err) => console.error(`Failed to log ${actionType} activity:`, err));
+    }
   };
+
+  const handleCallClick = (leadOrId) => handleActionAttempt(leadOrId, 'call');
+  const handleMailClick = (leadOrId) => handleActionAttempt(leadOrId, 'mail');
+  const handleWhatsAppClick = (leadOrId) => handleActionAttempt(leadOrId, 'whatsapp');
 
   const handleBulkAssign = async (e) => {
     const empId = e.target.value;
@@ -702,6 +741,7 @@ export default function LeadsTable({
             <option value="Qualified">Qualified</option>
             <option value="Won">Won</option>
             <option value="Lost">Lost</option>
+            <option value="Trash">Trash</option>
           </select>
 
           {/* Platform Filter Dropdown */}
@@ -850,7 +890,7 @@ export default function LeadsTable({
           </thead>
           <tbody>
             {filteredLeads.map((lead) => {
-              const { rowClass, statusText } = getExpiryDetails(lead.createdAt);
+              const { rowClass, statusText } = getExpiryDetails(lead.createdAt, lead.status);
               return (
                 <tr key={lead.id} className={rowClass}>
                   <td style={{ textAlign: 'center' }}>
@@ -881,7 +921,8 @@ export default function LeadsTable({
                       <a
                         href={`mailto:${lead.email}`}
                         className="leads-table__link"
-                        title={`Email ${lead.name}`}
+                        title={`Email ${lead.name} (Logs activity & increments attempt count)`}
+                        onClick={() => handleMailClick(lead)}
                       >
                         {lead.email}
                       </a>
@@ -894,8 +935,8 @@ export default function LeadsTable({
                       <a
                         href={`tel:${cleanPhoneNumber(lead.phone)}`}
                         className="leads-table__link"
-                        title={`Call ${lead.name}`}
-                        onClick={() => handleCallClick(lead.id)}
+                        title={`Call ${lead.name} (Logs activity & increments attempt count)`}
+                        onClick={() => handleCallClick(lead)}
                       >
                         {lead.phone}
                       </a>
@@ -958,6 +999,8 @@ export default function LeadsTable({
                             ? 'var(--color-success)'
                             : lead.status === 'Lost'
                             ? 'var(--color-danger)'
+                            : lead.status === 'Trash'
+                            ? '#64748b'
                             : lead.status === 'Qualified'
                             ? '#8b5cf6'
                             : lead.status === 'Contacted'
@@ -971,6 +1014,7 @@ export default function LeadsTable({
                       <option value="Qualified">Qualified</option>
                       <option value="Won">Won</option>
                       <option value="Lost">Lost</option>
+                      <option value="Trash">Trash</option>
                     </select>
                   </td>
                   <td
@@ -1022,29 +1066,41 @@ export default function LeadsTable({
                   </td>
                   <td>
                     <div className="leads-table__actions" style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
-                      {lead.phone && lead.phone !== '—' ? (
-                        <>
-                          <a
-                            href={`tel:${cleanPhoneNumber(lead.phone)}`}
-                            className="btn leads-table__call-btn leads-table__icon-btn"
-                            title="Call Lead (Increments Call Attempts)"
-                            onClick={() => handleCallClick(lead.id)}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-                          </a>
-                          <a
-                            href={`https://wa.me/${cleanPhoneNumber(lead.phone)}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="btn leads-table__whatsapp-btn leads-table__icon-btn"
-                            title="Chat on WhatsApp"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
-                          </a>
-                        </>
-                      ) : (
+                      {lead.phone && lead.phone !== '—' && (
+                        <a
+                          href={`tel:${cleanPhoneNumber(lead.phone)}`}
+                          className="btn leads-table__call-btn leads-table__icon-btn"
+                          title="Call Lead (Logs activity & increments attempt count)"
+                          onClick={() => handleCallClick(lead)}
+                        >
+                          <Phone size={15} />
+                        </a>
+                      )}
+                      {lead.email && lead.email !== '—' && (
+                        <a
+                          href={`mailto:${lead.email}`}
+                          className="btn leads-table__email-btn leads-table__icon-btn"
+                          title="Send Email (Logs activity & increments attempt count)"
+                          onClick={() => handleMailClick(lead)}
+                        >
+                          <Mail size={15} />
+                        </a>
+                      )}
+                      {lead.phone && lead.phone !== '—' && (
+                        <a
+                          href={`https://wa.me/${cleanPhoneNumber(lead.phone)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn leads-table__whatsapp-btn leads-table__icon-btn"
+                          title="Chat on WhatsApp (Logs activity & increments attempt count)"
+                          onClick={() => handleWhatsAppClick(lead)}
+                        >
+                          <MessageSquare size={15} />
+                        </a>
+                      )}
+                      {(!lead.phone || lead.phone === '—') && (!lead.email || lead.email === '—') && (
                         <span style={{ fontSize: '0.75rem', color: 'var(--color-text-dimmed)', fontStyle: 'italic' }}>
-                          No contact
+                          No contact info
                         </span>
                       )}
                       <Button

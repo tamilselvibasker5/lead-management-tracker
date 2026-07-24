@@ -171,6 +171,11 @@
   color: var(--color-warning);
 }
 
+.notification-item__icon--trash {
+  background: rgba(244, 63, 94, 0.15);
+  color: var(--color-danger);
+}
+
 .notification-item__content {
   flex: 1;
   display: flex;

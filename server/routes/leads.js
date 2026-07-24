@@ -2,12 +2,14 @@ import express from 'express';
 import Lead from '../models/Lead.js';
 import User from '../models/User.js';
 import Notification from '../models/Notification.js';
+import { checkAndTrashExpiredLeads } from '../utils/trashService.js';
 
 const router = express.Router();
 
 // GET /api/leads
 router.get('/', async (req, res) => {
   try {
+    await checkAndTrashExpiredLeads();
     const { assignedTo } = req.query;
     let filter = {};
 
@@ -315,14 +317,16 @@ router.post('/:id/swap', async (req, res) => {
 router.post('/:id/activities', async (req, res) => {
   try {
     const { id } = req.params;
-    const activity = req.body;
+    const activity = req.body || {};
+
+    const noteContent = (activity.note || activity.text || activity.message || activity.description || '').trim();
 
     const newActivity = {
-      id: `act_${Date.now()}`,
+      id: activity.id || `act_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
       type: activity.type || 'note',
-      note: activity.note || '',
+      note: noteContent || 'Activity logged',
       authorName: activity.authorName || 'System',
-      timestamp: new Date().toISOString(),
+      timestamp: activity.timestamp || new Date().toISOString(),
     };
 
     const lead = await Lead.findOne({ id });

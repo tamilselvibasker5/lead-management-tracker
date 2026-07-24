@@ -190,6 +190,36 @@
   color: #ffffff !important;
 }
 
+.leads-table__whatsapp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.25) !important;
+  transition: all var(--transition-fast);
+}
+
+.leads-table__whatsapp-btn:hover {
+  background: #10b981 !important;
+  color: #ffffff !important;
+}
+
+.leads-table__email-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(6, 182, 212, 0.12) !important;
+  color: #06b6d4 !important;
+  border: 1px solid rgba(6, 182, 212, 0.25) !important;
+  transition: all var(--transition-fast);
+}
+
+.leads-table__email-btn:hover {
+  background: #06b6d4 !important;
+  color: #ffffff !important;
+}
+
 .leads-table__delete-btn {
   display: inline-flex;
   align-items: center;
@@ -265,7 +295,8 @@
 .leads-table th:nth-child(8), .leads-table td:nth-child(8) { width: 150px; min-width: 150px; }
 .leads-table th:nth-child(9), .leads-table td:nth-child(9) { width: 160px; min-width: 160px; }
 .leads-table th:nth-child(10), .leads-table td:nth-child(10) { width: 200px; min-width: 200px; }
-.leads-table th:nth-child(11), .leads-table td:nth-child(11) { width: 185px; min-width: 185px; overflow: visible !important; }
+.leads-table th:nth-child(12), .leads-table td:nth-child(12),
+.leads-table th:nth-child(11), .leads-table td:nth-child(11) { width: 250px; min-width: 250px; overflow: visible !important; }
 
 .leads-table__checkbox {
   width: 17px;

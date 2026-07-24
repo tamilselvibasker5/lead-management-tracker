@@ -4,7 +4,7 @@ const activitySchema = new mongoose.Schema(
   {
     id: { type: String, required: true },
     type: { type: String, default: 'note' },
-    note: { type: String, required: true },
+    note: { type: String, default: '' },
     authorName: { type: String, default: 'System' },
     timestamp: { type: String, default: () => new Date().toISOString() },
   },

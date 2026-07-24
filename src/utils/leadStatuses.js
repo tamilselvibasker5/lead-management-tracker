@@ -9,4 +9,5 @@ export const LEAD_STATUSES = {
   PROPOSAL_SENT: 'Proposal Sent',
   WON: 'Won',
   LOST: 'Lost',
+  TRASH: 'Trash',
 };

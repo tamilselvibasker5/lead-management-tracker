@@ -8,7 +8,7 @@ import LeadDetailsModal from '../components/leads/LeadDetailsModal';
 import AddLeadModal from '../components/leads/AddLeadModal';
 import Button from '../components/common/Button';
 import { ROLES } from '../utils/roles';
-import { Plus, LayoutGrid, Table, Sparkles, AlertTriangle, Trophy, Filter } from 'lucide-react';
+import { Plus, LayoutGrid, Table, Sparkles, AlertTriangle, Trophy, Filter, Trash2 } from 'lucide-react';
 
 export default function LeadsPage() {
   const { role } = useAuth();
@@ -18,7 +18,7 @@ export default function LeadsPage() {
   const isAdmin = role === ROLES.ADMIN;
 
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'kanban'
-  const [activeChip, setActiveChip] = useState('all'); // 'all' | 'dueToday' | 'urgent' | 'won'
+  const [activeChip, setActiveChip] = useState('all'); // 'all' | 'dueToday' | 'urgent' | 'won' | 'trash'
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [leadToView, setLeadToView] = useState(null);
@@ -47,6 +47,10 @@ export default function LeadsPage() {
 
     if (activeChip === 'won') {
       return leads.filter((l) => (l.status || '').toLowerCase() === 'won');
+    }
+
+    if (activeChip === 'trash') {
+      return leads.filter((l) => (l.status || '').toLowerCase() === 'trash');
     }
 
     return leads;
@@ -238,6 +242,25 @@ export default function LeadsPage() {
           }}
         >
           <Trophy size={13} /> Won Deals
+        </button>
+
+        <button
+          onClick={() => setActiveChip('trash')}
+          style={{
+            padding: '0.4rem 0.85rem',
+            borderRadius: '999px',
+            border: '1px solid var(--color-border)',
+            background: activeChip === 'trash' ? 'rgba(100, 116, 139, 0.15)' : 'var(--color-surface)',
+            color: activeChip === 'trash' ? '#64748b' : 'var(--color-text-muted)',
+            fontWeight: 600,
+            fontSize: '0.8rem',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.35rem',
+          }}
+        >
+          <Trash2 size={13} /> Trash ({leads.filter((l) => (l.status || '').toLowerCase() === 'trash').length})
         </button>
       </div>
 

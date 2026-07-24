@@ -7,7 +7,7 @@ const notificationSchema = new mongoose.Schema(
     message: { type: String, required: true },
     type: {
       type: String,
-      enum: ['import', 'assignment', 'swap', 'general'],
+      enum: ['import', 'assignment', 'swap', 'trash', 'general'],
       default: 'general',
     },
     // Scoping recipient

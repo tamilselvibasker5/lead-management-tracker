@@ -12,6 +12,7 @@ import productRoutes from './routes/products.js';
 import notificationRoutes from './routes/notifications.js';
 
 import { seedDatabase } from './seed.js';
+import { checkAndTrashExpiredLeads } from './utils/trashService.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -36,6 +37,12 @@ app.get('/api/health', (req, res) => {
 const startServer = async () => {
   await connectDB();
   await seedDatabase();
+
+  // Run initial 7-day auto-trash check & setup periodic interval (every 1 min)
+  await checkAndTrashExpiredLeads();
+  setInterval(() => {
+    checkAndTrashExpiredLeads();
+  }, 60 * 1000);
 
   app.listen(PORT, () => {
     console.log(`[Express Server] Server running on http://localhost:${PORT}`);

@@ -62,7 +62,7 @@ export default function DashboardPage() {
     return leads.filter((l) => {
       if (!l.followUpDate) return false;
       const fDate = new Date(l.followUpDate);
-      return fDate < tomorrow && l.status !== 'Won' && l.status !== 'Lost';
+      return fDate < tomorrow && l.status !== 'Won' && l.status !== 'Lost' && l.status !== 'Trash';
     });
   }, [leads]);
 

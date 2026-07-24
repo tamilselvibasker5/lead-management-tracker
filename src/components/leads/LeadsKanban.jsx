@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import Button from '../common/Button';
-import { Phone, MessageSquare, Notebook, ArrowRightLeft, User, Sparkles, CheckCircle2, Trophy, XCircle, Search, Filter, X } from 'lucide-react';
+import { Phone, MessageSquare, Notebook, ArrowRightLeft, User, Sparkles, CheckCircle2, Trophy, XCircle, Trash2, Search, Filter, X } from 'lucide-react';
 import NotepadModal from './NotepadModal';
 import SwapLeadModal from './SwapLeadModal';
 import { useAuth } from '../../contexts/AuthContext';
@@ -13,6 +13,7 @@ const KANBAN_COLUMNS = [
   { id: 'Qualified', label: 'Qualified', color: '#8b5cf6', icon: CheckCircle2 },
   { id: 'Won', label: 'Won', color: '#10b981', icon: Trophy },
   { id: 'Lost', label: 'Lost', color: '#ef4444', icon: XCircle },
+  { id: 'Trash', label: 'Trash', color: '#64748b', icon: Trash2 },
 ];
 
 export default function LeadsKanban({

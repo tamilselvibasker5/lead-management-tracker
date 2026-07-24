@@ -45,3 +45,9 @@
   color: var(--color-danger);
   border-color: rgba(244, 63, 94, 0.2);
 }
+
+.lead-status-dropdown--Trash .dropdown__select {
+  background-color: rgba(100, 116, 139, 0.15);
+  color: #64748b;
+  border-color: rgba(100, 116, 139, 0.3);
+}

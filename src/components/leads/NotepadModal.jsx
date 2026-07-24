@@ -37,6 +37,7 @@ export default function NotepadModal({ isOpen, onClose, lead, initialNotes = '',
       if (onAddActivity) {
         await onAddActivity(lead.id, {
           type: activityType,
+          note: notes.trim(),
           text: notes.trim(),
         });
       }
