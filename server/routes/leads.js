@@ -171,7 +171,7 @@ router.put('/:id', async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    const lead = await Lead.findOneAndUpdate({ id }, updates, { new: true });
+    const lead = await Lead.findOneAndUpdate({ id }, updates, { returnDocument: 'after' });
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
     }
@@ -187,7 +187,7 @@ router.put('/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const lead = await Lead.findOneAndUpdate({ id }, { status }, { new: true });
+    const lead = await Lead.findOneAndUpdate({ id }, { status }, { returnDocument: 'after' });
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
     }
@@ -219,7 +219,7 @@ router.put('/:id/assign', async (req, res) => {
     const lead = await Lead.findOneAndUpdate(
       { id },
       { assignedTo: assigneeName, assignedToRaw: assigneeRaw },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     if (!lead) {

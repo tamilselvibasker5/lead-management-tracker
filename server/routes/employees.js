@@ -56,10 +56,10 @@ router.put('/:id', async (req, res) => {
       queryConditions.push({ _id: new mongoose.Types.ObjectId(id) });
     }
 
-    let employee = await User.findOneAndUpdate({ $or: queryConditions }, updates, { new: true, runValidators: true });
+    let employee = await User.findOneAndUpdate({ $or: queryConditions }, updates, { returnDocument: 'after', runValidators: true });
 
     if (!employee && updates.email) {
-      employee = await User.findOneAndUpdate({ email: updates.email.toLowerCase().trim() }, updates, { new: true, runValidators: true });
+      employee = await User.findOneAndUpdate({ email: updates.email.toLowerCase().trim() }, updates, { returnDocument: 'after', runValidators: true });
     }
 
     if (!employee) {

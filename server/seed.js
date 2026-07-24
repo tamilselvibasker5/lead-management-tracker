@@ -93,7 +93,7 @@ export const seedDatabase = async () => {
     ];
 
     for (const emp of employeesToUpsert) {
-      await User.findOneAndUpdate({ email: emp.email }, emp, { upsert: true, new: true });
+      await User.findOneAndUpdate({ email: emp.email }, emp, { upsert: true, returnDocument: 'after' });
     }
     console.log('[Seed] Employees seeded/updated in MongoDB Atlas successfully.');
 
