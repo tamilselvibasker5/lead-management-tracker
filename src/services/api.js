@@ -2,7 +2,10 @@
  * Centralized API module connected to MongoDB Atlas via Express backend.
  */
 
-const API_BASE = '/api';
+const API_BASE =
+  import.meta.env.VITE_API_BASE ||
+  import.meta.env.VITE_API_URL ||
+  '/api';
 
 async function handleResponse(res) {
   const contentType = res.headers.get('content-type') || '';

@@ -18,7 +18,25 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+const allowedOrigins = [
+  'https://lead-management-tracker.vercel.app',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:5000',
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or same-origin proxy rewrites)
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+        return callback(null, true);
+      }
+      return callback(null, true); // Permissive CORS for smooth deployment
+    },
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: '10mb' }));
 
 // Routes
