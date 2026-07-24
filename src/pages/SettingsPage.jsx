@@ -10,6 +10,8 @@ export default function SettingsPage() {
 
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [location, setLocation] = useState(user?.location || '');
+  const [language, setLanguage] = useState(user?.language || user?.languages || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -37,9 +39,11 @@ export default function SettingsPage() {
 
     try {
       const res = await updateProfile({
-        userId: user?.id,
+        userId: user?.id || user?._id,
         name,
         email,
+        location,
+        language,
         currentPassword: currentPassword || undefined,
         newPassword: newPassword || undefined,
       });
@@ -159,6 +163,32 @@ export default function SettingsPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', marginBottom: '0.4rem' }}>
+              Location / Region
+            </label>
+            <input 
+              type="text" 
+              placeholder="e.g. Chennai, Tamil Nadu"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              style={{ width: '100%' }}
+            />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--color-text-muted)', marginBottom: '0.4rem' }}>
+              Spoken Languages
+            </label>
+            <input 
+              type="text" 
+              placeholder="e.g. English, Hindi, Tamil"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
               style={{ width: '100%' }}
             />
           </div>

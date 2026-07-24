@@ -4,7 +4,7 @@ import Button from '../common/Button';
 import { ROLES } from '../../utils/roles';
 import './AddEmployeeModal.css';
 
-const INITIAL_FORM = { name: '', email: '', phone: '', location: '', role: ROLES.EMPLOYEE };
+const INITIAL_FORM = { name: '', email: '', phone: '', location: '', language: '', role: ROLES.EMPLOYEE };
 
 /**
  * Modal form for admins to add a new employee.
@@ -43,7 +43,10 @@ export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
     }
     try {
       setSubmitting(true);
-      await onAdd(form);
+      await onAdd({
+        ...form,
+        language: form.language.trim() || 'English',
+      });
       setForm({ ...INITIAL_FORM });
       setErrors({});
       onClose();
@@ -140,6 +143,51 @@ export default function AddEmployeeModal({ isOpen, onClose, onAdd }) {
             value={form.location}
             onChange={handleChange('location')}
           />
+        </div>
+
+        <div className="add-employee__group">
+          <label className="add-employee__label" htmlFor="emp-language">
+            Languages Spoken
+          </label>
+          <input
+            id="emp-language"
+            className="add-employee__input"
+            placeholder="e.g. English, Hindi, Tamil"
+            value={form.language}
+            onChange={handleChange('language')}
+          />
+          <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap', marginTop: '0.45rem' }}>
+            {['English', 'Tamil', 'Hindi', 'Telugu', 'Kannada', 'Marathi', 'Gujarati', 'Malayalam', 'Bengali'].map((lang) => {
+              const isSelected = form.language.toLowerCase().includes(lang.toLowerCase());
+              return (
+                <button
+                  key={lang}
+                  type="button"
+                  onClick={() => {
+                    const currentLangs = form.language.split(',').map((s) => s.trim()).filter(Boolean);
+                    if (isSelected) {
+                      setForm((prev) => ({ ...prev, language: currentLangs.filter((l) => l.toLowerCase() !== lang.toLowerCase()).join(', ') }));
+                    } else {
+                      setForm((prev) => ({ ...prev, language: currentLangs.length ? `${prev.language}, ${lang}` : lang }));
+                    }
+                  }}
+                  style={{
+                    padding: '0.2rem 0.55rem',
+                    fontSize: '0.725rem',
+                    borderRadius: '999px',
+                    border: `1px solid ${isSelected ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                    background: isSelected ? 'rgba(99, 102, 241, 0.15)' : 'var(--color-surface)',
+                    color: isSelected ? 'var(--color-primary)' : 'var(--color-text-muted)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    transition: 'all 0.15s ease',
+                  }}
+                >
+                  {isSelected ? `✓ ${lang}` : `+ ${lang}`}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         <div className="add-employee__group">

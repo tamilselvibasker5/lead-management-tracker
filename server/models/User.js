@@ -9,6 +9,7 @@ const userSchema = new mongoose.Schema(
     role: { type: String, required: true, enum: ['admin', 'employee'] },
     phone: { type: String, default: '' },
     location: { type: String, default: '' },
+    language: { type: String, default: 'English' },
     avatar: { type: String, default: null },
   },
   { timestamps: true }

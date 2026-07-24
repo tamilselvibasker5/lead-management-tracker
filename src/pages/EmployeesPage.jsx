@@ -64,6 +64,8 @@ export default function EmployeesPage() {
         (emp.email && emp.email.toLowerCase().includes(term)) ||
         (emp.phone && emp.phone.toLowerCase().includes(term)) ||
         (emp.location && emp.location.toLowerCase().includes(term)) ||
+        (emp.language && emp.language.toLowerCase().includes(term)) ||
+        (emp.languages && String(emp.languages).toLowerCase().includes(term)) ||
         (emp.role && emp.role.toLowerCase().includes(term))
       );
     });
@@ -237,6 +239,7 @@ export default function EmployeesPage() {
                 <th>Email</th>
                 <th>Phone</th>
                 <th>Location / Region</th>
+                <th>Languages</th>
                 <th>Role</th>
                 <th>Assigned Workload</th>
                 <th>Actions</th>
@@ -256,6 +259,7 @@ export default function EmployeesPage() {
                     <td className="employees-table__secondary" title={emp.email}>{emp.email}</td>
                     <td className="employees-table__secondary" title={emp.phone}>{emp.phone || '—'}</td>
                     <td className="employees-table__secondary" title={emp.location || '—'}>{emp.location || '—'}</td>
+                    <td className="employees-table__secondary" title={emp.language || emp.languages || 'English'}>{emp.language || emp.languages || 'English'}</td>
                     <td>
                       <span className="leads-table__assigned">
                         {ROLE_LABELS[emp.role] || emp.role}
@@ -339,6 +343,7 @@ export default function EmployeesPage() {
                   <div>📧 {emp.email}</div>
                   <div>📞 {emp.phone || 'N/A'}</div>
                   <div>📍 {emp.location || 'Unassigned Region'}</div>
+                  <div>🌐 {emp.language || emp.languages || 'English'}</div>
                   <div style={{ fontWeight: 700, color: 'var(--color-primary)', marginTop: '0.25rem' }}>⚡ Active Workload: {assignedCount} Leads</div>
                 </div>
 
@@ -378,6 +383,10 @@ export default function EmployeesPage() {
         employee={inspectEmployee}
         leads={leads}
         onClose={() => setInspectEmployee(null)}
+        onEditEmployee={(emp) => {
+          setInspectEmployee(null);
+          setEditingEmployee(emp);
+        }}
       />
     </div>
   );

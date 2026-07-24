@@ -56,6 +56,26 @@ export function AuthProvider({ children }) {
     setUser((prev) => {
       const newUser = { ...prev, ...updatedUserData };
       setStoredAuth({ user: newUser, token });
+
+      try {
+        const storedEmps = localStorage.getItem('lead_tracker_employees');
+        if (storedEmps) {
+          const emps = JSON.parse(storedEmps);
+          if (Array.isArray(emps)) {
+            const nextEmps = emps.map((emp) =>
+              (newUser.id && emp.id === newUser.id) ||
+              (newUser._id && emp._id === newUser._id) ||
+              (newUser.email && emp.email === newUser.email)
+                ? { ...emp, ...newUser }
+                : emp
+            );
+            localStorage.setItem('lead_tracker_employees', JSON.stringify(nextEmps));
+          }
+        }
+      } catch (_) {}
+
+      window.dispatchEvent(new Event('employees_updated'));
+
       return newUser;
     });
   }, [token]);

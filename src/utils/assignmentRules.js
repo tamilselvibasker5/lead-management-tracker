@@ -96,36 +96,42 @@ export const employees = [
     id: 'usr_007',
     name: 'Tamilvanan',
     location: 'Chennai, Tamil Nadu',
+    language: 'English, Tamil',
     role: 'Employee'
   },
   {
     id: 'usr_008',
     name: 'Tamilnadu Employee',
     location: 'Tamil Nadu',
+    language: 'Tamil, English',
     role: 'Employee'
   },
   {
     id: 'usr_005',
     name: 'Karan Malhotra',
     location: 'Bangalore, Karnataka',
+    language: 'English, Kannada',
     role: 'Employee'
   },
   {
     id: 'usr_003',
     name: 'Amit Patel',
     location: 'Mumbai, Maharashtra',
+    language: 'English, Gujarati, Marathi',
     role: 'Employee'
   },
   {
     id: 'usr_004',
     name: 'Sunita Verma',
     location: 'Delhi, NCR',
+    language: 'English, Hindi',
     role: 'Employee'
   },
   {
     id: 'usr_006',
     name: 'Divya Agarwal',
     location: 'Hyderabad, Telangana',
+    language: 'English, Telugu',
     role: 'Employee'
   }
 ];
@@ -215,6 +221,7 @@ function calculateMatchScore(leadText, emp, leadRegions) {
 
   const empLoc = String(emp.location || '').toLowerCase().trim();
   const empName = String(emp.name || '').toLowerCase().trim();
+  const empLang = String(emp.language || emp.languages || 'English').toLowerCase().trim();
   const empRegions = Array.isArray(emp.regions) ? emp.regions.map((r) => String(r).toLowerCase()) : [];
 
   let score = 0;
@@ -261,11 +268,22 @@ function calculateMatchScore(leadText, emp, leadRegions) {
     }
   }
 
+  // 5. Language matching score bonus
+  if (empLang) {
+    const langTokens = empLang.split(/[\s,/-]+/).filter((t) => t.length > 2);
+    for (const lang of langTokens) {
+      if (leadText.includes(lang)) {
+        score += 85;
+      }
+    }
+  }
+
   return score;
 }
 
 /**
  * Finds the matching system employee for a lead based on location, city, state, & language.
+ * Unassigned leads fallback to an English language employee.
  *
  * @param {string|object} locationOrLead - Lead location string or lead object { location, city, state, ... }
  * @param {string} [language=''] - Lead language string (if locationOrLead is string)
@@ -283,21 +301,22 @@ export function findMatchingEmployee(locationOrLead, language = '', employeesLis
   if (!effectiveEmps || effectiveEmps.length === 0) return null;
 
   const leadText = extractLeadText(locationOrLead, typeof language === 'string' ? language : '');
-  if (!leadText) return null;
 
-  const leadRegions = findRegionsForText(leadText);
+  const leadRegions = leadText ? findRegionsForText(leadText) : [];
 
   let bestEmp = null;
   let maxScore = 0;
   const scoredEmployees = [];
 
-  for (const emp of effectiveEmps) {
-    const score = calculateMatchScore(leadText, emp, leadRegions);
-    if (score > 0) {
-      scoredEmployees.push({ emp, score });
-      if (score > maxScore) {
-        maxScore = score;
-        bestEmp = emp;
+  if (leadText) {
+    for (const emp of effectiveEmps) {
+      const score = calculateMatchScore(leadText, emp, leadRegions);
+      if (score > 0) {
+        scoredEmployees.push({ emp, score });
+        if (score > maxScore) {
+          maxScore = score;
+          bestEmp = emp;
+        }
       }
     }
   }
@@ -316,7 +335,29 @@ export function findMatchingEmployee(locationOrLead, language = '', employeesLis
     }
   }
 
-  return bestEmp;
+  if (bestEmp) return bestEmp;
+
+  // Fallback Rule: Assign unassigned leads to an English language employee
+  const englishEmps = effectiveEmps.filter((emp) => {
+    const empLangs = String(emp.language || emp.languages || 'English').toLowerCase();
+    return empLangs.includes('english') || empLangs === '';
+  });
+
+  if (englishEmps.length > 0) {
+    // Pick deterministically among English employees if lead text exists, else first
+    if (leadText) {
+      let hash = 0;
+      for (let i = 0; i < leadText.length; i++) {
+        hash = (hash << 5) - hash + leadText.charCodeAt(i);
+        hash |= 0;
+      }
+      const index = Math.abs(hash) % englishEmps.length;
+      return englishEmps[index];
+    }
+    return englishEmps[0];
+  }
+
+  return effectiveEmps[0] || null;
 }
 
 /**

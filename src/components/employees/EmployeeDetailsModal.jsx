@@ -1,9 +1,9 @@
 import { useMemo } from 'react';
 import Button from '../common/Button';
-import { X, User, Mail, Phone, MapPin, Shield, Trophy, Users, CheckCircle2 } from 'lucide-react';
+import { X, User, Mail, Phone, MapPin, Shield, Trophy, Users, CheckCircle2, Globe } from 'lucide-react';
 import { ROLE_LABELS } from '../../utils/roles';
 
-export default function EmployeeDetailsModal({ isOpen, onClose, employee, leads = [], onReassignLeads }) {
+export default function EmployeeDetailsModal({ isOpen, onClose, employee, leads = [], onEditEmployee }) {
   if (!isOpen || !employee) return null;
 
   const empLeads = useMemo(() => {
@@ -55,6 +55,7 @@ export default function EmployeeDetailsModal({ isOpen, onClose, employee, leads 
               <span><Mail size={13} style={{ display: 'inline', marginRight: '3px' }} /> {employee.email}</span>
               <span><Phone size={13} style={{ display: 'inline', marginRight: '3px' }} /> {employee.phone || 'N/A'}</span>
               <span><MapPin size={13} style={{ display: 'inline', marginRight: '3px' }} /> {employee.location || 'Unassigned Region'}</span>
+              <span><Globe size={13} style={{ display: 'inline', marginRight: '3px' }} /> {employee.language || employee.languages || 'English'}</span>
             </div>
           </div>
           <span style={{ padding: '0.3rem 0.75rem', borderRadius: '999px', background: 'rgba(99,102,241,0.15)', color: 'var(--color-primary)', fontSize: '0.75rem', fontWeight: 700 }}>
@@ -122,7 +123,19 @@ export default function EmployeeDetailsModal({ isOpen, onClose, employee, leads 
           )}
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid var(--color-border)' }}>
+          {onEditEmployee ? (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                onClose();
+                onEditEmployee(employee);
+              }}
+            >
+              Edit Profile & Language
+            </Button>
+          ) : <div />}
           <Button variant="secondary" onClick={onClose}>Close</Button>
         </div>
       </div>

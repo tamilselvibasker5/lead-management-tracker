@@ -3,6 +3,12 @@ import Lead from './models/Lead.js';
 
 export const seedDatabase = async () => {
   try {
+    // Backfill any existing MongoDB documents missing the language property
+    await User.updateMany(
+      { $or: [{ language: { $exists: false } }, { language: null }, { language: '' }] },
+      { $set: { language: 'English' } }
+    );
+
     const employeesToUpsert = [
       {
         id: 'usr_001',
@@ -12,6 +18,7 @@ export const seedDatabase = async () => {
         role: 'admin',
         phone: '+91 98765 43210',
         location: 'Mumbai, Maharashtra',
+        language: 'English, Hindi, Marathi',
       },
       {
         id: 'usr_002',
@@ -21,6 +28,7 @@ export const seedDatabase = async () => {
         role: 'employee',
         phone: '+91 98765 00000',
         location: 'Delhi, NCR',
+        language: 'English, Hindi',
       },
       {
         id: 'usr_003',
@@ -30,6 +38,7 @@ export const seedDatabase = async () => {
         role: 'employee',
         phone: '+91 98765 11111',
         location: 'Mumbai, Maharashtra',
+        language: 'English, Gujarati, Marathi',
       },
       {
         id: 'usr_004',
@@ -39,6 +48,7 @@ export const seedDatabase = async () => {
         role: 'employee',
         phone: '+91 98765 22222',
         location: 'Delhi, NCR',
+        language: 'English, Hindi',
       },
       {
         id: 'usr_005',
@@ -48,6 +58,7 @@ export const seedDatabase = async () => {
         role: 'employee',
         phone: '+91 98765 33333',
         location: 'Bangalore, Karnataka',
+        language: 'English, Kannada',
       },
       {
         id: 'usr_006',
@@ -57,6 +68,7 @@ export const seedDatabase = async () => {
         role: 'employee',
         phone: '+91 98765 44444',
         location: 'Hyderabad, Telangana',
+        language: 'English, Telugu',
       },
       {
         id: 'usr_007',
@@ -66,6 +78,7 @@ export const seedDatabase = async () => {
         role: 'employee',
         phone: '+91 98765 55555',
         location: 'Chennai, Tamil Nadu',
+        language: 'English, Tamil',
       },
       {
         id: 'usr_008',
@@ -75,11 +88,12 @@ export const seedDatabase = async () => {
         role: 'employee',
         phone: '+91 98765 66666',
         location: 'Tamil Nadu',
+        language: 'Tamil, English',
       },
     ];
 
     for (const emp of employeesToUpsert) {
-      await User.findOneAndUpdate({ email: emp.email }, emp, { upsert: true });
+      await User.findOneAndUpdate({ email: emp.email }, emp, { upsert: true, new: true });
     }
     console.log('[Seed] Employees seeded/updated in MongoDB Atlas successfully.');
 
@@ -109,44 +123,6 @@ export const seedDatabase = async () => {
               timestamp: new Date().toISOString(),
             },
           ],
-        },
-        {
-          id: 'lead_102',
-          platform: 'Google Search',
-          name: 'Ananya Roy',
-          email: 'ananya.roy@example.com',
-          phone: '+91 98300 23456',
-          location: 'Kolkata',
-          assignedTo: 'Neha Gupta',
-          assignedToRaw: 'emp_002',
-          status: 'Contacted',
-          callCount: 2,
-          followUpDate: new Date(Date.now() + 172800000).toISOString().split('T')[0],
-          notes: 'Requested product catalog and pricing sheet.',
-          activities: [
-            {
-              id: 'act_102',
-              type: 'call',
-              note: 'Called customer, shared brochure via email.',
-              authorName: 'Neha Gupta',
-              timestamp: new Date().toISOString(),
-            },
-          ],
-        },
-        {
-          id: 'lead_103',
-          platform: 'LinkedIn',
-          name: 'Rahul Kapoor',
-          email: 'rahul.k@example.com',
-          phone: '+91 98100 34567',
-          location: 'Delhi',
-          assignedTo: 'Rohan Verma',
-          assignedToRaw: 'emp_003',
-          status: 'Qualified',
-          callCount: 3,
-          followUpDate: new Date(Date.now() + 259200000).toISOString().split('T')[0],
-          notes: 'High intent buyer — scheduling demo.',
-          activities: [],
         },
       ];
       await Lead.insertMany(sampleLeads);

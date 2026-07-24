@@ -1,9 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { fetchProducts } from '../services/api';
+import { useLeads } from '../hooks/useLeads';
 import Spinner from '../components/common/Spinner';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
-import { Search, Filter, ShoppingBag, Tag, Star, Eye } from 'lucide-react';
+import ShareProductModal from '../components/products/ShareProductModal';
+import { Search, Filter, ShoppingBag, Tag, Star, Eye, Share2 } from 'lucide-react';
 import './ProductsPage.css';
 
 export default function ProductsPage() {
@@ -13,6 +15,9 @@ export default function ProductsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [sharingProduct, setSharingProduct] = useState(null);
+
+  const { leads, addLeadActivity } = useLeads();
 
   useEffect(() => {
     async function loadProducts() {
@@ -148,14 +153,24 @@ export default function ProductsPage() {
                     )}
                   </div>
 
-                  <Button
-                    variant="secondary"
-                    className="product-card__view-btn"
-                    onClick={() => setSelectedProduct(product)}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem' }}
-                  >
-                    <Eye size={15} /> View Details
-                  </Button>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setSharingProduct(product)}
+                      title="Share Product with Lead"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.65rem' }}
+                    >
+                      <Share2 size={15} color="var(--color-primary)" /> Share
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      className="product-card__view-btn"
+                      onClick={() => setSelectedProduct(product)}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem' }}
+                    >
+                      <Eye size={15} /> View Details
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -230,7 +245,18 @@ export default function ProductsPage() {
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.85rem' }}>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  const prod = selectedProduct;
+                  setSelectedProduct(null);
+                  setSharingProduct(prod);
+                }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <Share2 size={16} /> Share Product with Lead
+              </Button>
               <Button variant="secondary" onClick={() => setSelectedProduct(null)}>
                 Close
               </Button>
@@ -238,6 +264,15 @@ export default function ProductsPage() {
           </div>
         </Modal>
       )}
+
+      {/* Share Product Modal */}
+      <ShareProductModal
+        isOpen={!!sharingProduct}
+        onClose={() => setSharingProduct(null)}
+        product={sharingProduct}
+        leads={leads}
+        onAddActivity={addLeadActivity}
+      />
     </div>
   );
 }

@@ -18,9 +18,10 @@ import './LeadsTable.css';
  *   onDeleteClick?: (lead: object) => void,
  * }} props
  */
-import { Inbox, Check, X, Pencil, UploadCloud, DownloadCloud, Search, Trash2, ArrowUpDown, Filter, Notebook, ArrowRightLeft } from 'lucide-react';
+import { Inbox, Check, X, Pencil, UploadCloud, DownloadCloud, Search, Trash2, ArrowUpDown, Filter, Notebook, ArrowRightLeft, Share2 } from 'lucide-react';
 import NotepadModal from './NotepadModal';
 import SwapLeadModal from './SwapLeadModal';
+import ShareProductToLeadModal from './ShareProductToLeadModal';
 import { useAuth } from '../../contexts/AuthContext';
 
 export default function LeadsTable({
@@ -66,6 +67,9 @@ export default function LeadsTable({
   // Swap Lead Modal state
   const [swapLeadModalOpen, setSwapLeadModalOpen] = useState(false);
   const [leadToSwap, setLeadToSwap] = useState(null);
+
+  // Share Product Modal state
+  const [activeShareProductLead, setActiveShareProductLead] = useState(null);
 
   const handleOpenSwapModal = (lead) => {
     setLeadToSwap(lead);
@@ -1043,6 +1047,15 @@ export default function LeadsTable({
                           No contact
                         </span>
                       )}
+                      <Button
+                        variant="secondary"
+                        className="leads-table__icon-btn"
+                        onClick={() => setActiveShareProductLead(lead)}
+                        title="Share Product with Lead (via WhatsApp or Email)"
+                        style={{ color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}
+                      >
+                        <Share2 size={16} />
+                      </Button>
                       {currentUserRole === 'employee' && (
                         <Button
                           variant="secondary"
@@ -1099,6 +1112,14 @@ export default function LeadsTable({
         employees={employees}
         currentUserId={user?.id}
         onSwap={handleConfirmSwap}
+      />
+
+      {/* Share Product to Lead Modal */}
+      <ShareProductToLeadModal
+        isOpen={!!activeShareProductLead}
+        onClose={() => setActiveShareProductLead(null)}
+        lead={activeShareProductLead}
+        onAddActivity={onAddActivity}
       />
     </div>
   );
