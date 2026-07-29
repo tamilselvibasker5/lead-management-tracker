@@ -5,6 +5,7 @@ import Modal from '../common/Modal';
 import Spinner from '../common/Spinner';
 import * as api from '../../services/api';
 import { useAuth } from '../../contexts/AuthContext';
+import { useEmployees } from '../../hooks/useEmployees';
 import './LeadUploader.css';
 import { autoAssignLead } from '../../utils/assignmentRules';
 
@@ -111,7 +112,7 @@ function mapHeader(raw) {
  * @param {XLSX.WorkBook} workbook
  * @returns {{ headers: string[], mappedHeaders: string[], rows: object[] }}
  */
-function parseWorkbook(workbook) {
+function parseWorkbook(workbook, employeesList = []) {
   const sheetName = workbook.SheetNames[0];
   if (!sheetName) throw new Error('The workbook has no sheets.');
 
@@ -125,6 +126,16 @@ function parseWorkbook(workbook) {
 
   const rawHeaders = rawAoA[0].map(String);
   const mappedHeaders = rawHeaders.map(mapHeader);
+
+  // Verification: Ensure the Excel sheet contains lead-related headers
+  const isLeadExcel = rawHeaders.some((h) => {
+    const mapped = mapHeader(h);
+    return ['Name', 'Email', 'Phone', 'Location', 'Platform', 'Notes', 'Assigned to'].includes(mapped);
+  });
+
+  if (!isLeadExcel) {
+    throw new Error('This is not a lead details Excel sheet. Please upload a valid Excel sheet containing lead details (e.g., Name, Phone, Email, Location, or Platform).');
+  }
 
   // Convert to array-of-objects using the mapped headers
   const jsonData = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: false });
@@ -145,10 +156,23 @@ function parseWorkbook(workbook) {
       }
     }
 
-    // 3. Smart Auto-Assignment via autoAssignLead(location, language)
-    const locationVal = cleaned['Location'] || row['Location'] || row['location'] || row['State'] || row['City'] || row['Address'] || '';
-    const languageVal = cleaned['Language'] || row['Language'] || row['language'] || '';
-    cleaned['Assigned to'] = autoAssignLead(locationVal, languageVal);
+    // If Excel file explicitly specifies an employee name/ID in 'Assigned to' column, map ID -> Name if applicable
+    if (cleaned['Assigned to']) {
+      const rawAssignee = String(cleaned['Assigned to']).trim();
+      const empMatch = employeesList.find((e) => e.id === rawAssignee || e.name.toLowerCase() === rawAssignee.toLowerCase());
+      if (empMatch) {
+        cleaned['Assigned to'] = empMatch.name;
+      }
+    } else {
+      // 3. Smart Auto-Assignment via autoAssignLead(location, language, employeesList)
+      const locationVal = cleaned['Location'] || row['Location'] || row['location'] || row['State'] || row['City'] || row['Address'] || '';
+      const languageVal = cleaned['Language'] || row['Language'] || row['language'] || '';
+      const assignedVal = autoAssignLead(locationVal, languageVal, employeesList);
+      
+      // Look up employee name if autoAssignLead returned an employee ID (e.g. 'usr_001')
+      const matchedEmp = employeesList.find((e) => e.id === assignedVal || e.name === assignedVal);
+      cleaned['Assigned to'] = matchedEmp ? matchedEmp.name : (assignedVal || 'Unassigned');
+    }
 
     return cleaned;
   });
@@ -183,6 +207,7 @@ import { UploadCloud, AlertTriangle, CheckCircle2, FileSpreadsheet, X } from 'lu
 
 export default function LeadUploader({ onImportComplete }) {
   const { user, role } = useAuth();
+  const { employees } = useEmployees();
   /* ── State ── */
   const [file, setFile] = useState(null);
   const [parsedData, setParsedData] = useState(null); // { headers, mappedHeaders, rows }
@@ -226,7 +251,7 @@ export default function LeadUploader({ onImportComplete }) {
 
       const buffer = await selectedFile.arrayBuffer();
       const workbook = XLSX.read(buffer, { type: 'array' });
-      const result = parseWorkbook(workbook);
+      const result = parseWorkbook(workbook, employees);
 
       if (result.rows.length === 0) {
         throw new Error('No data rows found in the file.');
@@ -239,7 +264,7 @@ export default function LeadUploader({ onImportComplete }) {
     } finally {
       setParsing(false);
     }
-  }, []);
+  }, [employees]);
 
   /* ── File input change ── */
   const onFileChange = (e) => {

@@ -230,6 +230,7 @@ export default function LeadsTable({
   useEffect(() => {
     if (Array.isArray(propLeads)) {
       const mapped = propLeads.map((l) => ({
+        ...l,
         id: l.id,
         platform: l.platform || l.Platform || l.source || l.Source || '—',
         name: l.name || l.Name || '—',
@@ -244,7 +245,8 @@ export default function LeadsTable({
           : (l['Assigned to'] || l.AssignedTo || ''),
         notes: l.notes || l.Notes || '—',
         createdAt: l.createdAt || l.CreatedAt || new Date().toISOString(),
-        callCount: Number(l.callCount || l.CallCount) || 0
+        callCount: Number(l.callCount || l.CallCount) || 0,
+        activities: l.activities || []
       }));
 
       // Preserve any locally imported leads so they are not wiped out by parent renders
@@ -593,7 +595,25 @@ export default function LeadsTable({
         const data = new Uint8Array(event.target?.result);
         const workbook = XLSX.read(data, { type: 'array' });
         const sheetName = workbook.SheetNames[0];
+        if (!sheetName) throw new Error('The workbook has no sheets.');
         const worksheet = workbook.Sheets[sheetName];
+        
+        const rawAoA = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        if (!rawAoA || rawAoA.length < 2) {
+          alert('This is not a lead details Excel sheet or contains no data rows.');
+          return;
+        }
+
+        const firstRowHeaders = (rawAoA[0] || []).map((h) => String(h).trim().toLowerCase());
+        const isLeadSheet = firstRowHeaders.some((h) =>
+          ['name', 'lead name', 'full name', 'phone', 'mobile', 'email', 'location', 'city', 'platform', 'source', 'assigned to', 'notes'].some((term) => h.includes(term))
+        );
+
+        if (!isLeadSheet) {
+          alert('This is not a lead details Excel sheet. Please upload a valid sheet with lead columns like Name, Phone, Email, Location, or Platform.');
+          return;
+        }
+
         const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
         const mappedLeads = jsonData.map((row, index) => {
@@ -640,6 +660,15 @@ export default function LeadsTable({
             return key ? String(row[key]) : '';
           };
 
+          const rawAssignedTo = getVal('assignedTo');
+          let finalAssignee = 'Unassigned';
+          if (rawAssignedTo) {
+            const matchedEmp = employees.find(
+              (e) => e.id === rawAssignedTo || e.name.toLowerCase() === rawAssignedTo.toLowerCase()
+            );
+            finalAssignee = matchedEmp ? matchedEmp.name : rawAssignedTo;
+          }
+
           return {
             id: `imported_${Date.now()}_${index}`,
             platform: getVal('platform') || '—',
@@ -647,7 +676,7 @@ export default function LeadsTable({
             email: getVal('email') || '—',
             phone: getVal('phone') || '—',
             location: getVal('location') || '—',
-            assignedTo: getVal('assignedTo') || 'Unassigned',
+            assignedTo: finalAssignee,
             notes: getVal('notes') || '—',
             createdAt: getVal('createdAt') || new Date().toISOString(),
             callCount: Number(getVal('callCount')) || 0
