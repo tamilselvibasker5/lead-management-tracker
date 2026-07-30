@@ -6,6 +6,7 @@ import Button from '../components/common/Button';
 import AddEmployeeModal from '../components/employees/AddEmployeeModal';
 import EditEmployeeModal from '../components/employees/EditEmployeeModal';
 import EmployeeDetailsModal from '../components/employees/EmployeeDetailsModal';
+import AddLeadModal from '../components/leads/AddLeadModal';
 import Spinner from '../components/common/Spinner';
 import {
   Building2,
@@ -23,9 +24,10 @@ import {
 
 export default function EmployeesPage() {
   const { employees, loading, addEmployee, updateEmployee, deleteEmployee } = useEmployees();
-  const { leads } = useLeads();
+  const { leads, addLead } = useLeads();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [addLeadModalOpen, setAddLeadModalOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState(null);
   const [inspectEmployee, setInspectEmployee] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -151,6 +153,14 @@ export default function EmployeesPage() {
               <LayoutGrid size={15} /> Cards
             </button>
           </div>
+
+          <Button
+            variant="secondary"
+            onClick={() => setAddLeadModalOpen(true)}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+          >
+            <UserPlus size={16} color="var(--color-primary)" /> Add Lead
+          </Button>
 
           <Button
             variant="primary"
@@ -369,6 +379,12 @@ export default function EmployeesPage() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onAdd={addEmployee}
+      />
+
+      <AddLeadModal
+        isOpen={addLeadModalOpen}
+        onClose={() => setAddLeadModalOpen(false)}
+        onSave={addLead}
       />
 
       <EditEmployeeModal
