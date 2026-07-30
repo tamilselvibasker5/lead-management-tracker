@@ -127,14 +127,14 @@ function parseWorkbook(workbook, employeesList = []) {
   const rawHeaders = rawAoA[0].map(String);
   const mappedHeaders = rawHeaders.map(mapHeader);
 
-  // Verification: Ensure the Excel sheet contains lead-related headers
-  const isLeadExcel = rawHeaders.some((h) => {
-    const mapped = mapHeader(h);
-    return ['Name', 'Email', 'Phone', 'Location', 'Platform', 'Notes', 'Assigned to'].includes(mapped);
-  });
+  // Verification: Ensure the Excel sheet contains essential lead fields (must contain Name AND at least Phone or Email)
+  const hasName = mappedHeaders.includes('Name');
+  const hasPhoneOrEmail = mappedHeaders.includes('Phone') || mappedHeaders.includes('Email');
 
-  if (!isLeadExcel) {
-    throw new Error('This is not a lead details Excel sheet. Please upload a valid Excel sheet containing lead details (e.g., Name, Phone, Email, Location, or Platform).');
+  if (!hasName || !hasPhoneOrEmail) {
+    throw new Error(
+      'Invalid file format: This Excel sheet does not contain valid lead details. A valid lead Excel sheet must include at least "Name" and "Phone" or "Email" columns.'
+    );
   }
 
   // Convert to array-of-objects using the mapped headers
