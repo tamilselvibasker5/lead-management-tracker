@@ -158,11 +158,9 @@ export default function LeadsPage() {
             </button>
           </div>
 
-          {isAdmin && (
-            <Button variant="primary" onClick={() => setAddModalOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <Plus size={16} /> Add Lead
-            </Button>
-          )}
+          <Button variant="primary" onClick={() => setAddModalOpen(true)} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+            <Plus size={16} /> Add Lead
+          </Button>
         </div>
       </div>
 
