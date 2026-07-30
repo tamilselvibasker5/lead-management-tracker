@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
-import { fetchProducts } from '../services/api';
+import { fetchProducts, addProduct, updateProduct } from '../services/api';
 import { useLeads } from '../hooks/useLeads';
 import Spinner from '../components/common/Spinner';
 import Modal from '../components/common/Modal';
 import Button from '../components/common/Button';
 import ShareProductModal from '../components/products/ShareProductModal';
-import { Search, Filter, ShoppingBag, Tag, Star, Eye, Share2 } from 'lucide-react';
+import ProductModal from '../components/products/ProductModal';
+import { Search, Filter, ShoppingBag, Tag, Star, Eye, Share2, Plus, Edit2 } from 'lucide-react';
 import './ProductsPage.css';
 
 export default function ProductsPage() {
@@ -16,6 +17,10 @@ export default function ProductsPage() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [sharingProduct, setSharingProduct] = useState(null);
+
+  // Add / Edit Product modal state
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const { leads, addLeadActivity } = useLeads();
 
@@ -34,6 +39,32 @@ export default function ProductsPage() {
     }
     loadProducts();
   }, []);
+
+  const handleSaveProduct = async (payload, id) => {
+    if (id) {
+      const updated = await updateProduct(id, payload);
+      setProducts((prev) =>
+        prev.map((p) => ((p.id === id || p._id === id) ? { ...p, ...updated } : p))
+      );
+      if (selectedProduct && (selectedProduct.id === id || selectedProduct._id === id)) {
+        setSelectedProduct((prev) => ({ ...prev, ...updated }));
+      }
+    } else {
+      const created = await addProduct(payload);
+      setProducts((prev) => [created, ...prev]);
+    }
+  };
+
+  const openAddModal = () => {
+    setEditingProduct(null);
+    setIsProductModalOpen(true);
+  };
+
+  const openEditModal = (product, e) => {
+    if (e) e.stopPropagation();
+    setEditingProduct(product);
+    setIsProductModalOpen(true);
+  };
 
   const categories = useMemo(() => {
     const set = new Set();
@@ -63,13 +94,20 @@ export default function ProductsPage() {
   return (
     <div className="products-page">
       {/* Header */}
-      <div className="products-page__header">
+      <div className="products-page__header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h2 className="products-page__title">Product Catalog</h2>
           <p className="products-page__subtitle">
             Explore commercial laundry machines, finishing equipment, chemicals, and genuine spare parts.
           </p>
         </div>
+        <Button
+          variant="primary"
+          onClick={openAddModal}
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.55rem 1rem', flexShrink: 0 }}
+        >
+          <Plus size={18} /> Add New Product
+        </Button>
       </div>
 
       {/* Controls / Filters */}
@@ -153,22 +191,30 @@ export default function ProductsPage() {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                    <Button
+                      variant="secondary"
+                      onClick={(e) => openEditModal(product, e)}
+                      title="Edit Product Details"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', padding: '0.4rem 0.6rem' }}
+                    >
+                      <Edit2 size={14} /> Edit
+                    </Button>
                     <Button
                       variant="secondary"
                       onClick={() => setSharingProduct(product)}
                       title="Share Product with Lead"
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.65rem' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.6rem' }}
                     >
-                      <Share2 size={15} color="var(--color-primary)" /> Share
+                      <Share2 size={14} color="var(--color-primary)" /> Share
                     </Button>
                     <Button
                       variant="secondary"
                       className="product-card__view-btn"
                       onClick={() => setSelectedProduct(product)}
-                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.4rem 0.8rem' }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', padding: '0.4rem 0.65rem' }}
                     >
-                      <Eye size={15} /> View Details
+                      <Eye size={14} /> Details
                     </Button>
                   </div>
                 </div>
@@ -246,17 +292,26 @@ export default function ProductsPage() {
             )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', borderTop: '1px solid var(--color-border)', paddingTop: '0.85rem' }}>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  const prod = selectedProduct;
-                  setSelectedProduct(null);
-                  setSharingProduct(prod);
-                }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
-              >
-                <Share2 size={16} /> Share Product with Lead
-              </Button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Button
+                  variant="secondary"
+                  onClick={() => openEditModal(selectedProduct)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Edit2 size={16} /> Edit Product
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => {
+                    const prod = selectedProduct;
+                    setSelectedProduct(null);
+                    setSharingProduct(prod);
+                  }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                >
+                  <Share2 size={16} /> Share Product with Lead
+                </Button>
+              </div>
               <Button variant="secondary" onClick={() => setSelectedProduct(null)}>
                 Close
               </Button>
@@ -264,6 +319,18 @@ export default function ProductsPage() {
           </div>
         </Modal>
       )}
+
+      {/* Add / Edit Product Modal */}
+      <ProductModal
+        isOpen={isProductModalOpen}
+        onClose={() => {
+          setIsProductModalOpen(false);
+          setEditingProduct(null);
+        }}
+        product={editingProduct}
+        categories={categories}
+        onSave={handleSaveProduct}
+      />
 
       {/* Share Product Modal */}
       <ShareProductModal
@@ -276,3 +343,4 @@ export default function ProductsPage() {
     </div>
   );
 }
+

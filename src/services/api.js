@@ -218,18 +218,78 @@ import { mockProducts } from '../mocks/products';
 /* ──────────────────────────── PRODUCTS ──────────────────────────── */
 
 export async function fetchProducts(filters = {}) {
-  let data = [...mockProducts];
-  if (filters.category && filters.category !== 'all') {
-    data = data.filter((p) => p.category === filters.category);
+  try {
+    const params = new URLSearchParams();
+    if (filters.category && filters.category !== 'all') params.append('category', filters.category);
+    if (filters.search) params.append('search', filters.search);
+
+    const query = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${API_BASE}/products${query}`);
+    return await handleResponse(res);
+  } catch (_err) {
+    // Fallback to mock products if server is not reachable
+    let data = [...mockProducts];
+    if (filters.category && filters.category !== 'all') {
+      data = data.filter((p) => p.category === filters.category);
+    }
+    if (filters.search) {
+      const term = filters.search.toLowerCase();
+      data = data.filter(
+        (p) =>
+          (p.name && p.name.toLowerCase().includes(term)) ||
+          (p.category && p.category.toLowerCase().includes(term)) ||
+          (p.description && p.description.toLowerCase().includes(term))
+      );
+    }
+    return data;
   }
-  if (filters.search) {
-    const term = filters.search.toLowerCase();
-    data = data.filter(
-      (p) =>
-        (p.name && p.name.toLowerCase().includes(term)) ||
-        (p.category && p.category.toLowerCase().includes(term)) ||
-        (p.description && p.description.toLowerCase().includes(term))
-    );
-  }
-  return data;
 }
+
+export async function addProduct(productData) {
+  try {
+    const res = await fetch(`${API_BASE}/products`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(productData),
+    });
+    return await handleResponse(res);
+  } catch (_err) {
+    // Local fallback for offline/mock mode
+    const newProd = {
+      id: `prod_${Date.now()}`,
+      ...productData,
+      price: Number(productData.price),
+      originalPrice: productData.originalPrice ? Number(productData.originalPrice) : Number(productData.price),
+      rating: productData.rating || 5,
+      reviews: productData.reviews || 0,
+      specifications: productData.specifications || {},
+    };
+    mockProducts.push(newProd);
+    return newProd;
+  }
+}
+
+export async function updateProduct(id, productData) {
+  try {
+    const res = await fetch(`${API_BASE}/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(productData),
+    });
+    return await handleResponse(res);
+  } catch (_err) {
+    // Local fallback for offline/mock mode
+    const idx = mockProducts.findIndex((p) => p.id === id || p._id === id);
+    if (idx !== -1) {
+      mockProducts[idx] = {
+        ...mockProducts[idx],
+        ...productData,
+        price: Number(productData.price),
+        originalPrice: productData.originalPrice ? Number(productData.originalPrice) : mockProducts[idx].originalPrice,
+      };
+      return mockProducts[idx];
+    }
+    throw new Error('Product not found in mock store');
+  }
+}
+
