@@ -28,6 +28,8 @@ const leadSchema = new mongoose.Schema(
     activities: { type: [activitySchema], default: [] },
     createdBy: { type: String, default: null },
     createdByRole: { type: String, default: null },
+    expirationWarned: { type: Boolean, default: false },
+    trashedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

@@ -56,7 +56,7 @@ const startServer = async () => {
   await connectDB();
   await seedDatabase();
 
-  // Run initial 7-day auto-trash check & setup periodic interval (every 1 min)
+  // Run initial 24-hour auto-trash check & setup periodic interval (every 1 min)
   await checkAndTrashExpiredLeads();
   setInterval(() => {
     checkAndTrashExpiredLeads();

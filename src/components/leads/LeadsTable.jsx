@@ -9,7 +9,7 @@ import './LeadsTable.css';
 /**
  * LeadsTable component.
  * Displays: Source, Name, Email, Phone, Location, Assigned to, Days Remaining, Call Attempts, Notes, and Actions.
- * Implements a 7-Day Aging Policy with visual alerts and inline Call Attempts tracking.
+ * Implements a 24-Hour Aging Policy with visual alerts and inline Call Attempts tracking.
  *
  * @param {{
  *   leads?: object[],
@@ -279,7 +279,7 @@ export default function LeadsTable({
   };
 
   /**
-   * Calculates remaining days before the 7-day mark and returns
+   * Calculates remaining hours before the 24-hour mark and returns
    * visual styling classes along with display values.
    *
    * @param {string} createdAt
@@ -293,15 +293,15 @@ export default function LeadsTable({
     const createdTime = new Date(createdAt).getTime();
     if (isNaN(createdTime)) return { rowClass: '', statusText: '—', daysVal: 0 };
 
-    const elapsedDays = (Date.now() - createdTime) / (24 * 60 * 60 * 1000);
-    const remainingDays = 7 - elapsedDays;
+    const elapsedHours = (Date.now() - createdTime) / (60 * 60 * 1000);
+    const remainingHours = 24 - elapsedHours;
 
-    if (remainingDays <= 0) {
+    if (remainingHours <= 0) {
       return { rowClass: 'row-expired', statusText: 'Moved to Trash', daysVal: 0 };
-    } else if (remainingDays <= 2) {
-      return { rowClass: 'row-warning', statusText: `${remainingDays.toFixed(1)} days remaining`, daysVal: remainingDays };
+    } else if (remainingHours <= 6) {
+      return { rowClass: 'row-warning', statusText: `${remainingHours.toFixed(1)} hrs remaining`, daysVal: remainingHours / 24 };
     } else {
-      return { rowClass: 'row-normal', statusText: `${remainingDays.toFixed(1)} days remaining`, daysVal: remainingDays };
+      return { rowClass: 'row-normal', statusText: `${remainingHours.toFixed(1)} hrs remaining`, daysVal: remainingHours / 24 };
     }
   };
 
@@ -911,7 +911,7 @@ export default function LeadsTable({
               <th>Location</th>
               <th>Assigned to</th>
               <th>Status</th>
-              <th>Days Remaining</th>
+              <th>Time Remaining</th>
               <th>Call Attempts</th>
               <th>Notes</th>
               <th>Actions</th>

@@ -187,7 +187,14 @@ router.put('/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    const lead = await Lead.findOneAndUpdate({ id }, { status }, { returnDocument: 'after' });
+    const updates = { status };
+    if (status === 'Trash') {
+      updates.trashedAt = new Date();
+    } else {
+      updates.trashedAt = null;
+    }
+
+    const lead = await Lead.findOneAndUpdate({ id }, updates, { returnDocument: 'after' });
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
     }

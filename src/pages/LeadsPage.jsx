@@ -39,9 +39,9 @@ export default function LeadsPage() {
 
     if (activeChip === 'urgent') {
       return leads.filter((l) => {
-        if (!l.createdAt) return false;
-        const elapsedDays = (Date.now() - new Date(l.createdAt).getTime()) / (24 * 60 * 60 * 1000);
-        return 7 - elapsedDays <= 2;
+        if (!l.createdAt || l.status === 'Trash' || l.status === 'Won' || l.status === 'Lost') return false;
+        const elapsedHours = (Date.now() - new Date(l.createdAt).getTime()) / (60 * 60 * 1000);
+        return 24 - elapsedHours <= 6;
       });
     }
 

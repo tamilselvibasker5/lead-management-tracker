@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNotifications } from '../../contexts/NotificationContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Bell, UploadCloud, UserPlus, ArrowRightLeft, Trash2, Info } from 'lucide-react';
+import { Bell, UploadCloud, UserPlus, ArrowRightLeft, Trash2, Info, AlertTriangle } from 'lucide-react';
 import './NotificationCenter.css';
 
 function formatRelativeTime(dateString) {
@@ -47,6 +47,8 @@ export default function NotificationCenter() {
         return <ArrowRightLeft size={18} />;
       case 'trash':
         return <Trash2 size={18} />;
+      case 'warning':
+        return <AlertTriangle size={18} color="#ef4444" />;
       default:
         return <Info size={18} />;
     }

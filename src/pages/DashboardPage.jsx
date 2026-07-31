@@ -59,10 +59,19 @@ export default function DashboardPage() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
+    const TWENTY_THREE_HOURS_MS = 23 * 60 * 60 * 1000;
+    const now = Date.now();
+
     return leads.filter((l) => {
-      if (!l.followUpDate) return false;
-      const fDate = new Date(l.followUpDate);
-      return fDate < tomorrow && l.status !== 'Won' && l.status !== 'Lost' && l.status !== 'Trash';
+      if (l.status === 'Won' || l.status === 'Lost' || l.status === 'Trash') return false;
+
+      // Check if scheduled followUpDate is today or earlier
+      const isScheduledDue = l.followUpDate && new Date(l.followUpDate) < tomorrow;
+
+      // Check if lead is within 1 hour of 24h expiration (23+ hrs old)
+      const isExpiringSoon = l.createdAt && (now - new Date(l.createdAt).getTime()) >= TWENTY_THREE_HOURS_MS;
+
+      return isScheduledDue || isExpiringSoon;
     });
   }, [leads]);
 
@@ -321,18 +330,33 @@ export default function DashboardPage() {
                     <h4 style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--color-text)' }}>{l.name}</h4>
                     <span style={{ fontSize: '0.775rem', color: 'var(--color-text-muted)' }}>📍 {l.location || 'Unknown'}</span>
                   </div>
-                  <span
-                    style={{
-                      padding: '0.15rem 0.5rem',
-                      borderRadius: 'var(--radius-sm)',
-                      background: 'rgba(245, 158, 11, 0.15)',
-                      color: 'var(--color-warning)',
-                      fontSize: '0.725rem',
-                      fontWeight: 700,
-                    }}
-                  >
-                    Due Today
-                  </span>
+                  {l.createdAt && (Date.now() - new Date(l.createdAt).getTime()) >= 23 * 60 * 60 * 1000 ? (
+                    <span
+                      style={{
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        color: 'var(--color-danger)',
+                        fontSize: '0.725rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Expires &lt;1h!
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        padding: '0.15rem 0.5rem',
+                        borderRadius: 'var(--radius-sm)',
+                        background: 'rgba(245, 158, 11, 0.15)',
+                        color: 'var(--color-warning)',
+                        fontSize: '0.725rem',
+                        fontWeight: 700,
+                      }}
+                    >
+                      Due Today
+                    </span>
+                  )}
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '0.25rem' }}>

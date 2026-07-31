@@ -235,7 +235,7 @@
   color: #ffffff !important;
 }
 
-/* 7-Day Expiry & Aging Policy Row Styles */
+/* 24-Hour Expiry & Aging Policy Row Styles */
 .leads-table tbody tr.row-warning {
   border-left: 4px solid var(--color-warning);
 }
